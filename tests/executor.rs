@@ -32,6 +32,7 @@ fn it_runs_tasks() {
     assert!(executor.run().is_some());
     assert!(executor.run().is_some());
     assert!(executor.run().is_none());
+    drop(executor);
 
     assert!(a_was_polled);
     assert!(b_was_polled);

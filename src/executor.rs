@@ -2,12 +2,13 @@ use core::{
     array,
     cell::UnsafeCell,
     mem::MaybeUninit,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 use futures::{Future, FutureExt};
 
 static READY: AtomicUsize = AtomicUsize::new(0);
+static IS_LOCKED: AtomicBool = AtomicBool::new(false);
 
 /// Futures executor
 pub struct Executor<T, const N: usize> {
@@ -18,6 +19,10 @@ pub struct Executor<T, const N: usize> {
 
 impl<T, const N: usize> Default for Executor<T, N> {
     fn default() -> Self {
+        if IS_LOCKED.swap(true, Ordering::SeqCst) {
+            panic!("Only one Executor can be created at a time.")
+        }
+
         let tasks = array::from_fn(|_| UnsafeCell::new(MaybeUninit::uninit()));
         Self {
             tasks,
@@ -103,6 +108,12 @@ impl<T, const N: usize> Executor<T, N> {
 
     pub fn split(&mut self) -> (Spawner<T, N>, Runner<T, N>) {
         (Spawner { executor: self }, Runner { executor: self })
+    }
+}
+
+impl<T, const N: usize> Drop for Executor<T, N> {
+    fn drop(&mut self) {
+        IS_LOCKED.store(false, Ordering::SeqCst);
     }
 }
 
