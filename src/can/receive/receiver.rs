@@ -1,9 +1,9 @@
-use futures::{task::AtomicWaker, Stream};
+use super::Receive;
 use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-use super::Receive;
+use futures::{task::AtomicWaker, Stream};
 
 pub struct Receiver<R> {
     receive: R,

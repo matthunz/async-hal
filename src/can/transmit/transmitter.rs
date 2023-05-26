@@ -1,10 +1,10 @@
-use crate::{Spawn};
 use super::Transmit;
-use futures::Sink;
+use crate::Spawn;
 use core::{
     pin::Pin,
     task::{Context, Poll},
 };
+use futures::Sink;
 
 /// Transmitter sink for frames to a CAN bus.
 pub struct Transmitter<T, F, S> {

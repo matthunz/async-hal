@@ -1,4 +1,3 @@
-
 mod transmit;
 pub use transmit::{Transmit, Transmitter};
 
@@ -7,7 +6,6 @@ pub use transmit::MockTransmit;
 
 mod receive;
 pub use receive::{DualReceiver, Receive, Receiver};
-
 
 #[cfg(feature = "mock")]
 mod mock {
