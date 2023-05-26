@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "mock"), no_std)]
 
-///! Async hardware abstraction layer for embedded devices
+//! Async hardware abstraction layer for embedded devices
 use core::task::Waker;
 use futures::task::AtomicWaker;
 

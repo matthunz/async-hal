@@ -22,8 +22,11 @@ impl<T, const N: usize> Executor<T, N> {
     /// use async_hal::Executor;
     /// 
     /// let executor = Executor::<(), 1>::take().unwrap();
+    /// 
+    /// // Only one executor can exist at a time
     /// assert!(Executor::<(), 2>::take().is_none());
     /// 
+    /// // After dropping the executor, we can create a new one
     /// drop(executor);
     /// assert!(Executor::<(), 2>::take().is_some());
     /// ```
@@ -40,6 +43,7 @@ impl<T, const N: usize> Executor<T, N> {
         })
     }
 
+    /// Spawn a task on the executor.
     pub fn spawn(&self, task: T) -> Option<T> {
         let set = self.set.load(Ordering::SeqCst);
         let idx = set.trailing_zeros() as usize;
@@ -62,6 +66,9 @@ impl<T, const N: usize> Executor<T, N> {
         None
     }
 
+    /// Poll each pending task, returning the output of the first that's ready.
+    /// If none are ready, this function returns `None`.
+    /// Otherwise this method should be called until none are ready.
     pub fn run(&mut self) -> Option<T::Output>
     where
         T: Future + Unpin,
