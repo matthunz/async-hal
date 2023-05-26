@@ -79,8 +79,8 @@ impl<T, const N: usize> Executor<T, N> {
 
             // Create the task waker and context
             static VTABLE: RawWakerVTable =
-                RawWakerVTable::new(|_| todo!(), |_| {}, |_| {}, |_| {});
-            let raw_waker = RawWaker::new(&(), &VTABLE);
+                RawWakerVTable::new(|data| RawWaker::new(data, &VTABLE), wake, wake, |_| {});
+            let raw_waker = RawWaker::new(idx as *const (), &VTABLE);
             let waker = Waker::from_raw(raw_waker);
             let mut cx = Context::from_waker(&waker);
 
@@ -101,6 +101,12 @@ impl<T, const N: usize> Executor<T, N> {
     pub fn split(&mut self) -> (Spawner<T, N>, Runner<T, N>) {
         (Spawner { executor: self }, Runner { executor: self })
     }
+}
+
+fn wake(data: *const ()) {
+    // Set this task's pending bit
+    let idx = data as usize;
+    READY.fetch_or(1 << idx, Ordering::SeqCst);
 }
 
 pub struct Runner<'a, T, const N: usize> {

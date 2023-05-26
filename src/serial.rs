@@ -15,7 +15,7 @@ pub struct Reader<R, W, S> {
 }
 
 impl<R, W, S> Reader<R, W, S> {
-    /// Create a new writer from an instance of [`Read`] and [`Scheduler`].
+    /// Create a new reader from an instance of [`Read`] and [`Scheduler`].
     pub const fn new(read: R, spawn: S) -> Self {
         Self {
             read,
