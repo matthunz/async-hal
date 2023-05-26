@@ -4,7 +4,7 @@ use async_hal::executor::Executor;
 use futures::Future;
 
 #[test]
-fn it_spawns() {
+fn it_spawns_tasks() {
     let executor = Executor::<_, 2>::new();
     assert!(executor.spawn(()).is_none());
     assert!(executor.spawn(()).is_none());
@@ -13,14 +13,17 @@ fn it_spawns() {
 }
 
 #[test]
-fn it_runs() {
+fn it_runs_tasks() {
     let executor = Executor::<_, 2>::new();
 
+    let mut a_was_polled = false;
     let a: Pin<Box<dyn Future<Output = ()>>> = Box::pin(async {
-        dbg!("A");
+        a_was_polled = true;
     });
+
+    let mut b_was_polled = false;
     let b: Pin<Box<dyn Future<Output = ()>>> = Box::pin(async {
-        dbg!("B");
+        b_was_polled = true;
     });
 
     executor.spawn(a);
@@ -29,4 +32,7 @@ fn it_runs() {
     assert!(executor.run().is_some());
     assert!(executor.run().is_some());
     assert!(executor.run().is_none());
+
+    assert!(a_was_polled);
+    assert!(b_was_polled);
 }

@@ -53,28 +53,32 @@ impl<T, const N: usize> Executor<T, N> {
         T: Future + Unpin,
     {
         loop {
+            // Check if any tasks are ready
             let ready = READY.load(Ordering::SeqCst);
-
             if ready == 0 {
                 break None;
             }
 
+            // Get the index of the first ready task
             let idx = ready.trailing_zeros() as usize;
             if (self.locked.load(Ordering::SeqCst) & (1 << idx)) != 0 {
                 continue;
             }
 
+            // Clear the pending bit for this task
             let mask = !(1 << idx);
             READY.fetch_and(mask, Ordering::SeqCst);
 
-            let cell = unsafe { &mut *self.tasks[idx].get() };
-            let task = unsafe { cell.assume_init_mut() };
-
+            // Create the task waker and context
             static VTABLE: RawWakerVTable =
                 RawWakerVTable::new(|_| todo!(), |_| {}, |_| {}, |_| {});
             let raw_waker = RawWaker::new(&(), &VTABLE);
             let waker = unsafe { Waker::from_raw(raw_waker) };
             let mut cx = Context::from_waker(&waker);
+
+            // Poll the current task
+            let cell = unsafe { &mut *self.tasks[idx].get() };
+            let task = unsafe { cell.assume_init_mut() };
 
             if let Poll::Ready(output) = task.poll_unpin(&mut cx) {
                 *cell = MaybeUninit::uninit();
