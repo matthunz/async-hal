@@ -7,6 +7,7 @@ use core::{
 use embedded_hal::serial::{Read, Write};
 use futures::{Sink, Stream};
 
+/// Read half of a UART serial port.
 pub struct Reader<R, W, S> {
     read: R,
     spawn: S,
@@ -14,6 +15,7 @@ pub struct Reader<R, W, S> {
 }
 
 impl<R, W, S> Reader<R, W, S> {
+    /// Create a new writer from an instance of [`Read`] and [`Scheduler`].
     pub const fn new(read: R, spawn: S) -> Self {
         Self {
             read,
@@ -44,17 +46,24 @@ where
     }
 }
 
+/// Write half of a UART serial port.
 pub struct Writer<T, W, S> {
-    pub write: T,
+    // Generic non-blocking serial writer
+    write: T,
+
+    // Cache of the next word to send
     word: Option<W>,
-    spawn: S,
+
+    // Scheduler to wake the write task
+    scheduler: S,
 }
 
 impl<T, W, S> Writer<T, W, S> {
-    pub const fn new(transmit: T, spawn: S) -> Self {
+    /// Create a new writer from an instance of [`Write`] and [`Scheduler`].
+    pub const fn new(transmit: T, scheduler: S) -> Self {
         Self {
             write: transmit,
-            spawn,
+            scheduler,
             word: None,
         }
     }
@@ -72,7 +81,7 @@ where
         if self.word.is_none() {
             Poll::Ready(Ok(()))
         } else {
-            self.spawn.schedule(cx.waker());
+            self.scheduler.schedule(cx.waker());
             Poll::Pending
         }
     }
@@ -87,7 +96,11 @@ where
     }
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        let Self { write, word, spawn } = &mut *self;
+        let Self {
+            write,
+            word,
+            scheduler: spawn,
+        } = &mut *self;
 
         if let Some(word) = word.clone() {
             // TODO flush!
