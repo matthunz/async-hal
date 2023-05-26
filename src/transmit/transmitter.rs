@@ -1,31 +1,31 @@
-use crate::Transmit;
-
-use futures::{task::AtomicWaker, Sink};
+use crate::{Spawn, Transmit};
+use futures::Sink;
 use std::{
     pin::Pin,
     task::{Context, Poll},
 };
 
-pub struct Transmitter<T, F> {
+pub struct Transmitter<T, F, S> {
     pub transmit: T,
     frame: Option<F>,
-    waker: &'static AtomicWaker,
+    spawn: S,
 }
 
-impl<T, F> Transmitter<T, F> {
-    pub const fn new(transmit: T, waker: &'static AtomicWaker) -> Self {
+impl<T, F, S> Transmitter<T, F, S> {
+    pub const fn new(transmit: T, spawn: S) -> Self {
         Self {
             transmit,
-            waker,
+            spawn,
             frame: None,
         }
     }
 }
 
-impl<T> Sink<T::Frame> for Transmitter<T, T::Frame>
+impl<T, S> Sink<T::Frame> for Transmitter<T, T::Frame, S>
 where
     T: Transmit + Unpin,
     T::Frame: Unpin,
+    S: Spawn + Unpin,
 {
     type Error = T::Error;
 
@@ -33,7 +33,7 @@ where
         if self.transmit.is_ready() {
             Poll::Ready(Ok(()))
         } else {
-            self.waker.register(cx.waker());
+            self.spawn.spawn(cx.waker());
             Poll::Pending
         }
     }
@@ -51,7 +51,7 @@ where
         let Self {
             transmit,
             frame,
-            waker,
+            spawn,
         } = &mut *self;
 
         if let Some(ref frame) = frame {
@@ -61,7 +61,7 @@ where
                     Poll::Ready(Ok(()))
                 }
                 Err(nb::Error::WouldBlock) => {
-                    waker.register(cx.waker());
+                    spawn.spawn(cx.waker());
                     Poll::Pending
                 }
                 Err(nb::Error::Other(error)) => Poll::Ready(Err(error)),
