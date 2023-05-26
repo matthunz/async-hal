@@ -3,10 +3,11 @@ name = "can"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["bxcan"]
 
 [dependencies]
-bxcan = "0.7.0"
+bxcan = { version = "0.7.0", optional = true }
 embedded-hal = "0.2.7"
 futures = "0.3.28"
 nb = "1.1.0"
