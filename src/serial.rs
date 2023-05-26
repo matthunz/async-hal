@@ -1,4 +1,4 @@
-use crate::Spawn;
+use crate::Scheduler;
 use core::{
     marker::PhantomData,
     pin::Pin,
@@ -13,12 +13,22 @@ pub struct Reader<R, W, S> {
     _marker: PhantomData<W>,
 }
 
+impl<R, W, S> Reader<R, W, S> {
+    pub const fn new(read: R, spawn: S) -> Self {
+        Self {
+            read,
+            spawn,
+            _marker: PhantomData,
+        }
+    }
+}
+
 impl<R: Unpin, W, S: Unpin> Unpin for Reader<R, W, S> {}
 
 impl<R, W, S> Stream for Reader<R, W, S>
 where
     R: Read<W> + Unpin,
-    S: Spawn + Unpin,
+    S: Scheduler + Unpin,
 {
     type Item = Result<W, R::Error>;
 
@@ -26,7 +36,7 @@ where
         match self.read.read() {
             Ok(frame) => Poll::Ready(Some(Ok(frame))),
             Err(nb::Error::WouldBlock) => {
-                self.spawn.spawn(cx.waker());
+                self.spawn.schedule(cx.waker());
                 Poll::Pending
             }
             Err(nb::Error::Other(error)) => Poll::Ready(Some(Err(error))),
@@ -54,7 +64,7 @@ impl<T, W, S> Sink<W> for Writer<T, W, S>
 where
     T: Write<W> + Unpin,
     W: Clone + Unpin,
-    S: Spawn + Unpin,
+    S: Scheduler + Unpin,
 {
     type Error = T::Error;
 
@@ -62,7 +72,7 @@ where
         if self.word.is_none() {
             Poll::Ready(Ok(()))
         } else {
-            self.spawn.spawn(cx.waker());
+            self.spawn.schedule(cx.waker());
             Poll::Pending
         }
     }
@@ -87,7 +97,7 @@ where
                     Poll::Ready(Ok(()))
                 }
                 Err(nb::Error::WouldBlock) => {
-                    spawn.spawn(cx.waker());
+                    spawn.schedule(cx.waker());
                     Poll::Pending
                 }
                 Err(nb::Error::Other(error)) => Poll::Ready(Err(error)),

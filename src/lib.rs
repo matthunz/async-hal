@@ -6,21 +6,22 @@ use futures::task::AtomicWaker;
 pub mod can;
 
 pub mod executor;
+pub use executor::Executor;
 
 pub mod serial;
 
-pub trait Spawn {
-    fn spawn(&self, waker: &Waker);
+pub trait Scheduler {
+    fn schedule(&self, waker: &Waker);
 }
 
-impl Spawn for AtomicWaker {
-    fn spawn(&self, waker: &Waker) {
+impl Scheduler for AtomicWaker {
+    fn schedule(&self, waker: &Waker) {
         self.register(waker)
     }
 }
 
-impl<T: Spawn> Spawn for &'_ T {
-    fn spawn(&self, waker: &Waker) {
-        (*self).spawn(waker)
+impl<T: Scheduler> Scheduler for &'_ T {
+    fn schedule(&self, waker: &Waker) {
+        (*self).schedule(waker)
     }
 }

@@ -1,5 +1,5 @@
 use super::Transmit;
-use crate::Spawn;
+use crate::Scheduler;
 use core::{
     pin::Pin,
     task::{Context, Poll},
@@ -27,7 +27,7 @@ impl<T, S> Sink<T::Frame> for Transmitter<T, T::Frame, S>
 where
     T: Transmit + Unpin,
     T::Frame: Unpin,
-    S: Spawn + Unpin,
+    S: Scheduler + Unpin,
 {
     type Error = T::Error;
 
@@ -35,7 +35,7 @@ where
         if self.transmit.is_ready() {
             Poll::Ready(Ok(()))
         } else {
-            self.spawn.spawn(cx.waker());
+            self.spawn.schedule(cx.waker());
             Poll::Pending
         }
     }
@@ -63,7 +63,7 @@ where
                     Poll::Ready(Ok(()))
                 }
                 Err(nb::Error::WouldBlock) => {
-                    spawn.spawn(cx.waker());
+                    spawn.schedule(cx.waker());
                     Poll::Pending
                 }
                 Err(nb::Error::Other(error)) => Poll::Ready(Err(error)),
