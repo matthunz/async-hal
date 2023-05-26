@@ -34,8 +34,14 @@ impl<I: Instance> Receive for Rx1<I> {
 }
 
 pub struct Receiver<R> {
-    r: R,
+    receive: R,
     waker: &'static AtomicWaker,
+}
+
+impl<R> Receiver<R> {
+    pub const fn new(receive: R, waker: &'static AtomicWaker) -> Self {
+        Self { receive, waker }
+    }
 }
 
 impl<R> Stream for Receiver<R>
@@ -45,7 +51,7 @@ where
     type Item = Result<R::Frame, R::Error>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        match self.r.receive() {
+        match self.receive.receive() {
             Ok(frame) => Poll::Ready(Some(Ok(frame))),
             Err(nb::Error::WouldBlock) => {
                 self.waker.register(cx.waker());
@@ -63,12 +69,24 @@ pub trait Transmit {
     fn is_ready(&mut self) -> bool;
 
     fn transmit(&mut self, frame: &Self::Frame) -> nb::Result<(), Self::Error>;
+
+    fn abort(&mut self) -> bool;
 }
 
 pub struct Transmitter<T, F> {
     transmit: T,
     frame: Option<F>,
     waker: &'static AtomicWaker,
+}
+
+impl<T, F> Transmitter<T, F> {
+    pub const fn new(transmit: T, waker: &'static AtomicWaker) -> Self {
+        Self {
+            transmit,
+            waker,
+            frame: None,
+        }
+    }
 }
 
 impl<T> Sink<T::Frame> for Transmitter<T, T::Frame>
@@ -120,8 +138,9 @@ where
         }
     }
 
-    fn poll_close(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        todo!()
+    fn poll_close(mut self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.transmit.abort();
+        Poll::Ready(Ok(()))
     }
 }
 
