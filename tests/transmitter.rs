@@ -1,4 +1,4 @@
-use can::{MockFrame, MockTransmit, Transmitter};
+use async_hal::can::{MockFrame, MockTransmit, Transmitter};
 use embedded_hal::can::{Id, StandardId};
 use futures::{task::AtomicWaker, SinkExt};
 

@@ -1,5 +1,4 @@
 use embedded_hal::can::Frame;
-
 mod transmitter;
 pub use transmitter::Transmitter;
 
@@ -13,7 +12,7 @@ pub trait Transmit {
 }
 
 #[cfg(feature = "mock")]
-use crate::MockFrame;
+use super::MockFrame;
 
 #[cfg(feature = "mock")]
 #[derive(Default)]

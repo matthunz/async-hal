@@ -3,7 +3,7 @@ use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-use crate::Receive;
+use super::Receive;
 
 pub struct Receiver<R> {
     receive: R,

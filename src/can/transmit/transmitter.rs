@@ -1,4 +1,5 @@
-use crate::{Spawn, Transmit};
+use crate::{Spawn};
+use super::Transmit;
 use futures::Sink;
 use core::{
     pin::Pin,
