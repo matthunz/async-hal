@@ -10,29 +10,36 @@ use futures::{Future, FutureExt};
 static READY: AtomicUsize = AtomicUsize::new(0);
 static IS_LOCKED: AtomicBool = AtomicBool::new(false);
 
-/// Futures executor
+/// Task executor singleton
 pub struct Executor<T, const N: usize> {
     tasks: [UnsafeCell<MaybeUninit<T>>; N],
     set: AtomicUsize,
     locked: AtomicUsize,
 }
 
-impl<T, const N: usize> Default for Executor<T, N> {
-    fn default() -> Self {
+impl<T, const N: usize> Executor<T, N> {
+    /// ```
+    /// use async_hal::Executor;
+    /// 
+    /// let executor = Executor::<(), 1>::take().unwrap();
+    /// assert!(Executor::<(), 2>::take().is_none());
+    /// 
+    /// drop(executor);
+    /// assert!(Executor::<(), 2>::take().is_some());
+    /// ```
+    pub fn take() -> Option<Self> {
         if IS_LOCKED.swap(true, Ordering::SeqCst) {
-            panic!("Only one Executor can be created at a time.")
+            return None;
         }
 
         let tasks = array::from_fn(|_| UnsafeCell::new(MaybeUninit::uninit()));
-        Self {
+        Some(Self {
             tasks,
             set: AtomicUsize::new((1 << N) - 1),
             locked: AtomicUsize::new(0),
-        }
+        })
     }
-}
 
-impl<T, const N: usize> Executor<T, N> {
     pub fn spawn(&self, task: T) -> Option<T> {
         let set = self.set.load(Ordering::SeqCst);
         let idx = set.trailing_zeros() as usize;

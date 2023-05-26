@@ -4,7 +4,7 @@ use std::pin::Pin;
 
 #[test]
 fn it_spawns_tasks() {
-    let executor = Executor::<_, 2>::default();
+    let executor = Executor::<_, 2>::take().unwrap();
 
     assert!(executor.spawn(()).is_none());
     assert!(executor.spawn(()).is_none());
@@ -14,7 +14,7 @@ fn it_spawns_tasks() {
 
 #[test]
 fn it_runs_tasks() {
-    let mut executor = Executor::<_, 2>::default();
+    let mut executor = Executor::<_, 2>::take().unwrap();
 
     let mut a_was_polled = false;
     let a: Pin<Box<dyn Future<Output = ()>>> = Box::pin(async {
