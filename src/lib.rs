@@ -5,6 +5,8 @@ use futures::task::AtomicWaker;
 
 pub mod can;
 
+pub mod serial;
+
 pub trait Spawn {
     fn spawn(&self, waker: &Waker);
 }
