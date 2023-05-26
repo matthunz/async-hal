@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["bxcan"]
+mock = []
+default = ["bxcan", "mock"]
 
 [dependencies]
 bxcan = { version = "0.7.0", optional = true }

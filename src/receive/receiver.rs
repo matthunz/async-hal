@@ -1,9 +1,8 @@
 use futures::{task::AtomicWaker, Stream};
-use std::{
+use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-
 use crate::Receive;
 
 pub struct Receiver<R> {

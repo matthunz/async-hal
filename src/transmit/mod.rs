@@ -1,4 +1,4 @@
-use embedded_hal::can::{Frame, Id};
+use embedded_hal::can::Frame;
 
 mod transmitter;
 pub use transmitter::Transmitter;
@@ -12,50 +12,16 @@ pub trait Transmit {
     fn transmit(&mut self, frame: &Self::Frame) -> nb::Result<(), Self::Error>;
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct MockFrame {
-    pub id: Id,
-    pub data: Vec<u8>,
-}
+#[cfg(feature = "mock")]
+use crate::MockFrame;
 
-impl Frame for MockFrame {
-    fn new(id: impl Into<Id>, data: &[u8]) -> Option<Self> {
-        Some(Self {
-            id: id.into(),
-            data: data.to_owned(),
-        })
-    }
-
-    fn new_remote(_id: impl Into<Id>, _dlc: usize) -> Option<Self> {
-        todo!()
-    }
-
-    fn is_extended(&self) -> bool {
-        todo!()
-    }
-
-    fn is_remote_frame(&self) -> bool {
-        todo!()
-    }
-
-    fn id(&self) -> Id {
-        todo!()
-    }
-
-    fn dlc(&self) -> usize {
-        todo!()
-    }
-
-    fn data(&self) -> &[u8] {
-        todo!()
-    }
-}
-
+#[cfg(feature = "mock")]
 #[derive(Default)]
 pub struct MockTransmit {
     pub frames: Vec<MockFrame>,
 }
 
+#[cfg(feature = "mock")]
 impl Transmit for MockTransmit {
     type Frame = MockFrame;
 
