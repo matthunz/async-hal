@@ -47,8 +47,16 @@ impl<T, const N: usize> Executor<T, N> {
         None
     }
 
-    // TODO this is unsafe if multiple interrupts use `run`.
-    pub fn run(&self) -> Option<T::Output>
+    pub fn run(&mut self) -> Option<T::Output>
+    where
+        T: Future + Unpin,
+    {
+        // Safety: we have guarenteed unique access with `&mut self`
+        unsafe { self.run_unchecked() }
+    }
+
+    // Safety: this can only be called by one interrupt function at a time
+    unsafe fn run_unchecked(&self) -> Option<T::Output>
     where
         T: Future + Unpin,
     {
@@ -73,12 +81,12 @@ impl<T, const N: usize> Executor<T, N> {
             static VTABLE: RawWakerVTable =
                 RawWakerVTable::new(|_| todo!(), |_| {}, |_| {}, |_| {});
             let raw_waker = RawWaker::new(&(), &VTABLE);
-            let waker = unsafe { Waker::from_raw(raw_waker) };
+            let waker = Waker::from_raw(raw_waker);
             let mut cx = Context::from_waker(&waker);
 
             // Poll the current task
-            let cell = unsafe { &mut *self.tasks[idx].get() };
-            let task = unsafe { cell.assume_init_mut() };
+            let cell = &mut *self.tasks[idx].get();
+            let task = cell.assume_init_mut();
 
             if let Poll::Ready(output) = task.poll_unpin(&mut cx) {
                 *cell = MaybeUninit::uninit();
@@ -88,5 +96,33 @@ impl<T, const N: usize> Executor<T, N> {
                 break Some(output);
             }
         }
+    }
+
+    pub fn split(&mut self) -> (Spawner<T, N>, Runner<T, N>) {
+        (Spawner { executor: self }, Runner { executor: self })
+    }
+}
+
+pub struct Runner<'a, T, const N: usize> {
+    executor: &'a Executor<T, N>,
+}
+
+impl<T, const N: usize> Runner<'_, T, N> {
+    pub fn run(&mut self) -> Option<T::Output>
+    where
+        T: Future + Unpin,
+    {
+        // Safety: we have guarenteed unique access with `&mut self`
+        unsafe { self.executor.run_unchecked() }
+    }
+}
+
+pub struct Spawner<'a, T, const N: usize> {
+    executor: &'a Executor<T, N>,
+}
+
+impl<T, const N: usize> Spawner<'_, T, N> {
+    pub fn spawn(&self, task: T) -> Option<T> {
+        self.executor.spawn(task)
     }
 }
