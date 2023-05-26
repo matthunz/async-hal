@@ -1,6 +1,6 @@
 use bxcan::{Instance, Rx0, Rx1};
 use embedded_hal::can::Frame;
-use futures::{task::AtomicWaker, Stream};
+use futures::{task::AtomicWaker, Sink, Stream};
 use std::{
     pin::Pin,
     task::{Context, Poll},
@@ -53,6 +53,75 @@ where
             }
             Err(nb::Error::Other(error)) => Poll::Ready(Some(Err(error))),
         }
+    }
+}
+
+pub trait Transmit {
+    type Frame: Frame;
+    type Error;
+
+    fn is_ready(&mut self) -> bool;
+
+    fn transmit(&mut self, frame: &Self::Frame) -> nb::Result<(), Self::Error>;
+}
+
+pub struct Transmitter<T, F> {
+    transmit: T,
+    frame: Option<F>,
+    waker: &'static AtomicWaker,
+}
+
+impl<T> Sink<T::Frame> for Transmitter<T, T::Frame>
+where
+    T: Transmit + Unpin,
+    T::Frame: Unpin,
+{
+    type Error = T::Error;
+
+    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        if self.transmit.is_ready() {
+            Poll::Ready(Ok(()))
+        } else {
+            self.waker.register(cx.waker());
+            Poll::Pending
+        }
+    }
+
+    fn start_send(mut self: Pin<&mut Self>, item: T::Frame) -> Result<(), Self::Error> {
+        if self.frame.is_none() {
+            self.frame = Some(item);
+            Ok(())
+        } else {
+            todo!()
+        }
+    }
+
+    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        let Self {
+            transmit,
+            frame,
+            waker,
+        } = &mut *self;
+
+        if let Some(ref frame) = frame {
+            match transmit.transmit(frame) {
+                Ok(()) => {
+                    self.frame = None;
+                    Poll::Ready(Ok(()))
+                }
+                Err(nb::Error::WouldBlock) => {
+                    waker.register(cx.waker());
+                    Poll::Pending
+                }
+                Err(nb::Error::Other(error)) => Poll::Ready(Err(error)),
+            }
+        } else {
+            Poll::Ready(Ok(()))
+        }
+    }
+
+    fn poll_close(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        todo!()
     }
 }
 
