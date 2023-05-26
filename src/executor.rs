@@ -68,7 +68,7 @@ impl<T, const N: usize> Executor<T, N> {
 
     /// Poll each pending task, returning the output of the first that's ready.
     /// If none are ready, this function returns `None`.
-    /// Otherwise this method should be called until none are ready.
+    /// Otherwise this method should be called until no tasks are left pending.
     pub fn run(&mut self) -> Option<T::Output>
     where
         T: Future + Unpin,
