@@ -9,14 +9,15 @@ use futures::{Future, FutureExt};
 
 static READY: AtomicUsize = AtomicUsize::new(0);
 
+/// Futures executor
 pub struct Executor<T, const N: usize> {
     tasks: [UnsafeCell<MaybeUninit<T>>; N],
     set: AtomicUsize,
     locked: AtomicUsize,
 }
 
-impl<T, const N: usize> Executor<T, N> {
-    pub fn new() -> Self {
+impl<T, const N: usize> Default for Executor<T, N> {
+    fn default() -> Self {
         let tasks = array::from_fn(|_| UnsafeCell::new(MaybeUninit::uninit()));
         Self {
             tasks,
@@ -24,7 +25,9 @@ impl<T, const N: usize> Executor<T, N> {
             locked: AtomicUsize::new(0),
         }
     }
+}
 
+impl<T, const N: usize> Executor<T, N> {
     pub fn spawn(&self, task: T) -> Option<T> {
         let set = self.set.load(Ordering::SeqCst);
         let idx = set.trailing_zeros() as usize;
