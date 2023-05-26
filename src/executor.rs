@@ -19,14 +19,20 @@ impl<T, const N: usize> Executor<T, N> {
         }
     }
 
-    pub fn spawn(&self, task: T) {
+    pub fn spawn(&self, task: T) -> Option<T> {
         let set = self.set.load(Ordering::SeqCst);
-        let idx = set.trailing_zeros();
+        let idx = set.trailing_zeros() as usize;
 
-        let cell = unsafe { &mut *self.tasks[idx as usize].get() };
+        if idx >= N {
+            return Some(task);
+        }
+
+        let cell = unsafe { &mut *self.tasks[idx].get() };
         *cell = MaybeUninit::new(task);
 
         let mask = !(1 << idx);
         self.set.fetch_and(mask, Ordering::SeqCst);
+
+        None
     }
 }
