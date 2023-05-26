@@ -1,5 +1,10 @@
 use bxcan::{Instance, Rx0, Rx1};
 use embedded_hal::can::Frame;
+use futures::{task::AtomicWaker, Stream};
+use std::{
+    pin::Pin,
+    task::{Context, Poll},
+};
 
 pub trait Receive {
     type Frame: Frame;
@@ -25,6 +30,29 @@ impl<I: Instance> Receive for Rx1<I> {
 
     fn receive(&mut self) -> nb::Result<Self::Frame, Self::Error> {
         self.receive()
+    }
+}
+
+pub struct Receiver<R> {
+    r: R,
+    waker: &'static AtomicWaker,
+}
+
+impl<R> Stream for Receiver<R>
+where
+    R: Receive + Unpin,
+{
+    type Item = Result<R::Frame, R::Error>;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+        match self.r.receive() {
+            Ok(frame) => Poll::Ready(Some(Ok(frame))),
+            Err(nb::Error::WouldBlock) => {
+                self.waker.register(cx.waker());
+                Poll::Pending
+            }
+            Err(nb::Error::Other(error)) => Poll::Ready(Some(Err(error))),
+        }
     }
 }
 
