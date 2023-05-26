@@ -11,3 +11,6 @@ bxcan = { version = "0.7.0", optional = true }
 embedded-hal = "0.2.7"
 futures = "0.3.28"
 nb = "1.1.0"
+
+[dev-dependencies]
+tokio = { version = "1.28.1", features = ["full"] }

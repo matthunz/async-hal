@@ -7,7 +7,7 @@ use std::{
 };
 
 pub struct Transmitter<T, F> {
-    transmit: T,
+    pub transmit: T,
     frame: Option<F>,
     waker: &'static AtomicWaker,
 }
