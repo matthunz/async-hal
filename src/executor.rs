@@ -20,12 +20,12 @@ pub struct Executor<T, const N: usize> {
 impl<T, const N: usize> Executor<T, N> {
     /// ```
     /// use async_hal::Executor;
-    /// 
+    ///
     /// let executor = Executor::<(), 1>::take().unwrap();
-    /// 
+    ///
     /// // Only one executor can exist at a time
     /// assert!(Executor::<(), 2>::take().is_none());
-    /// 
+    ///
     /// // After dropping the executor, we can create a new one
     /// drop(executor);
     /// assert!(Executor::<(), 2>::take().is_some());
