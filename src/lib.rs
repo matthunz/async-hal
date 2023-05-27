@@ -2,7 +2,6 @@
 
 //! Async hardware abstraction layer for embedded devices
 use core::task::Waker;
-
 use futures::task::AtomicWaker;
 
 /// CAN bus
@@ -18,7 +17,8 @@ pub use interrupt::Interrupt;
 /// UART serial port
 pub mod serial;
 
-mod timer;
+/// Timers
+pub mod timer;
 pub use timer::Timer;
 
 pub trait Scheduler {

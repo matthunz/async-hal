@@ -1,0 +1,6 @@
+[target.thumbv7m-none-eabi]
+runner = "./run.sh"
+rustflags = ["-C", "link-arg=-Tlink.x"]
+
+[build]
+target = "thumbv7m-none-eabi"
