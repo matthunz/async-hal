@@ -3,7 +3,7 @@ use core::{
     task::{Context, Poll},
 };
 
-use futures::{ready, Stream, StreamExt};
+use futures::{ready, Sink, SinkExt, Stream, StreamExt};
 
 /// Read bytes asynchronously.
 pub trait AsyncRead {
@@ -59,5 +59,61 @@ where
         let used = self.idx;
         self.idx = 0;
         Poll::Ready(Ok(used))
+    }
+}
+
+pub trait AsyncWrite {
+    type Error;
+
+    fn poll_write(
+        self: Pin<&mut Self>,
+        cx: &mut Context,
+        buf: &[u8],
+    ) -> Poll<Result<usize, Self::Error>>;
+
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
+}
+
+/// Writer for a sink of bytes
+pub const fn writer<T>(stream: T) -> Writer<T>
+where
+    T: Sink<u8> + Unpin,
+{
+    Writer::new(stream)
+}
+
+pub struct Writer<T> {
+    sink: T,
+}
+
+impl<T> Writer<T> {
+    pub const fn new(sink: T) -> Self {
+        Self { sink }
+    }
+}
+
+impl<T> AsyncWrite for Writer<T>
+where
+    T: Sink<u8> + Unpin,
+{
+    type Error = T::Error;
+
+    fn poll_write(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+        buf: &[u8],
+    ) -> Poll<Result<usize, Self::Error>> {
+        let mut idx = 0;
+        while idx < buf.len() {
+            ready!(self.sink.poll_ready_unpin(cx))?;
+            self.sink.start_send_unpin(buf[0])?;
+            idx += 1;
+        }
+
+        Poll::Ready(Ok(idx))
+    }
+
+    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.sink.poll_flush_unpin(cx)
     }
 }
