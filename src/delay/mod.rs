@@ -2,8 +2,9 @@ use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-use embedded_hal::timer::Periodic;
 use futures::{Future, Stream};
+
+pub use embedded_hal::timer::Periodic;
 
 #[cfg(feature = "nb")]
 mod timer;
@@ -28,27 +29,27 @@ pub trait DelayMs {
 
     fn delay_ms(&mut self, ms: u32) -> DelayMsFuture<Self>
     where
-        Self: Sized + Unpin,
+        Self: Unpin,
     {
         DelayMsFuture { timer: self, ms }
     }
 
     fn interval(&mut self, ms: u32) -> Interval<Self>
     where
-        Self: Periodic + Sized + Unpin,
+        Self: Periodic + Unpin,
     {
         Interval { timer: self, ms }
     }
 }
 
-pub struct DelayMsFuture<'a, T> {
+pub struct DelayMsFuture<'a, T: ?Sized> {
     timer: &'a mut T,
     ms: u32,
 }
 
 impl<T> Future for DelayMsFuture<'_, T>
 where
-    T: DelayMs + Unpin,
+    T: DelayMs + Unpin + ?Sized,
 {
     type Output = Result<(), T::Error>;
 
@@ -58,14 +59,14 @@ where
     }
 }
 
-pub struct Interval<'a, T> {
+pub struct Interval<'a, T: ?Sized> {
     timer: &'a mut T,
     ms: u32,
 }
 
 impl<T> Stream for Interval<'_, T>
 where
-    T: DelayMs + Unpin,
+    T: DelayMs + Unpin + ?Sized,
 {
     type Item = Result<(), T::Error>;
 

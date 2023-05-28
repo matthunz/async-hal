@@ -15,9 +15,11 @@ pub mod can;
 pub mod executor;
 pub use executor::Executor;
 
+/// Interrupt stream
 mod interrupt;
 pub use interrupt::Interrupt;
 
+/// Asynchronous IO
 pub mod io;
 
 /// UART serial port

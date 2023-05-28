@@ -1,39 +1,40 @@
-use crate::Scheduler;
 use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-use futures::Stream;
+use futures::Future;
 
-pub struct Interrupt<S> {
-    scheduler: S,
-    is_waiting: bool,
-}
+pub trait Interrupt {
+    type Error;
 
-impl<S> Interrupt<S> {
-    pub const fn new(scheduler: S) -> Self {
-        Self {
-            scheduler,
-            is_waiting: false,
-        }
+    fn poll_interrupt(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
+
+    fn poll_interrupt_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>
+    where
+        Self: Unpin,
+    {
+        Pin::new(self).poll_interrupt(cx)
+    }
+
+    fn interrupt(&mut self) -> InterruptFuture<Self>
+    where
+        Self: Unpin,
+    {
+        InterruptFuture { interrupt: self }
     }
 }
 
-impl<S> Stream for Interrupt<S>
+pub struct InterruptFuture<'a, T: ?Sized> {
+    interrupt: &'a mut T,
+}
+
+impl<T> Future for InterruptFuture<'_, T>
 where
-    S: Scheduler + Unpin,
+    T: Interrupt + Unpin + ?Sized,
 {
-    type Item = ();
+    type Output = Result<(), T::Error>;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        if self.is_waiting {
-            self.is_waiting = false;
-            Poll::Ready(Some(()))
-        } else {
-            self.is_waiting = true;
-            self.scheduler.schedule(cx.waker());
-
-            Poll::Pending
-        }
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        self.interrupt.poll_interrupt_unpin(cx)
     }
 }
