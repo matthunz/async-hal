@@ -18,8 +18,8 @@ pub use interrupt::Interrupt;
 pub mod serial;
 
 /// Timers
-pub mod timer;
-pub use timer::Timer;
+pub mod delay;
+pub use delay::{DelayMs, Timer};
 
 pub trait Scheduler {
     fn schedule(&self, waker: &Waker);
