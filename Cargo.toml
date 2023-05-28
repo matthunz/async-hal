@@ -9,7 +9,7 @@ repository = "https://github.com/matthunz/async-hal"
 [features]
 mock = []
 nb = ["dep:nb", "void"]
-default = ["bxcan", "mock"]
+default = ["bxcan", "mock", "nb"]
 
 [dependencies]
 bxcan = { version = "0.7.0", optional = true }
