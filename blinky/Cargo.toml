@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-async-hal = { path = "../", default-features = false }
+async-hal = { path = "../", default-features = false, features = ["nb"] }
 stm32f1xx-hal = { version = "0.10", features = ["rt", "stm32f103" ] }
 cortex-m = "0.7"
 cortex-m-rt = { version = "0.7", features = ["device"] }

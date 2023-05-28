@@ -6,7 +6,7 @@ use crate::hal::{
     prelude::*,
     timer::Event,
 };
-use async_hal::{Executor, Timer};
+use async_hal::{block_on, delay::Timer, DelayMs};
 use cortex_m::asm::wfi;
 use cortex_m_rt::entry;
 use futures::task::AtomicWaker;
@@ -55,21 +55,14 @@ fn main() -> ! {
     let task = async {
         loop {
             led.toggle();
-            timer.wait(1.secs()).await;
+            timer.delay_ms(1_000).await.unwrap();
         }
     };
     pin_mut!(task);
-
-    let mut executor = Executor::<_, 1>::take().unwrap();
-    executor.spawn(task);
 
     unsafe {
         cortex_m::peripheral::NVIC::unmask(Interrupt::TIM2);
     }
 
-    loop {
-        while executor.run().is_some() {}
-
-        wfi();
-    }
+    block_on(task, wfi)
 }
