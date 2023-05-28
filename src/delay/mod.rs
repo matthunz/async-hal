@@ -2,8 +2,8 @@ use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-
-use futures::{Stream, StreamExt};
+use embedded_hal::timer::Periodic;
+use futures::{Future, Stream};
 
 mod timer;
 pub use timer::Timer;
@@ -24,11 +24,35 @@ pub trait DelayMs {
         Pin::new(self).poll_delay_ms(cx, ms)
     }
 
-    fn interval(&mut self, ms: u32) -> Interval<Self>
+    fn delay_ms(&mut self, ms: u32) -> DelayMsFuture<Self>
     where
         Self: Sized + Unpin,
     {
+        DelayMsFuture { timer: self, ms }
+    }
+
+    fn interval(&mut self, ms: u32) -> Interval<Self>
+    where
+        Self: Periodic + Sized + Unpin,
+    {
         Interval { timer: self, ms }
+    }
+}
+
+pub struct DelayMsFuture<'a, T> {
+    timer: &'a mut T,
+    ms: u32,
+}
+
+impl<T> Future for DelayMsFuture<'_, T>
+where
+    T: DelayMs + Unpin,
+{
+    type Output = Result<(), T::Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        let ms = self.ms;
+        self.timer.poll_delay_ms_unpin(cx, ms)
     }
 }
 
