@@ -14,17 +14,23 @@ use panic_halt as _;
 use pin_utils::pin_mut;
 use stm32f1xx_hal as hal;
 
-#[interrupt]
-fn TIM2() {
-    TIMER_WAKER.wake();
-    unsafe {
-        (*TIM2::ptr())
-            .sr
-            .write(|w| w.bits(0xffff & !Event::Update.bits()));
-    };
-}
+macro_rules! timer {
+    ($counter:expr) => {{
+        static WAKER: AtomicWaker = AtomicWaker::new();
 
-static TIMER_WAKER: AtomicWaker = AtomicWaker::new();
+        #[interrupt]
+        fn TIM2() {
+            WAKER.wake();
+            unsafe {
+                (*TIM2::ptr())
+                    .sr
+                    .write(|w| w.bits(0xffff & !Event::Update.bits()));
+            };
+        }
+
+        Timer::new($counter, &WAKER)
+    }};
+}
 
 #[entry]
 fn main() -> ! {
@@ -44,7 +50,7 @@ fn main() -> ! {
 
     let mut timer = dp.TIM2.counter_ms(&clocks);
     timer.listen(Event::Update);
-    let mut timer = Timer::new(timer, &TIMER_WAKER);
+    let mut timer = timer!(timer);
 
     let task = async {
         loop {
