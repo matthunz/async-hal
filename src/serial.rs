@@ -1,4 +1,4 @@
-use crate::{Scheduler, io::AsyncRead};
+use crate::{io::AsyncRead, Scheduler};
 use core::{
     marker::PhantomData,
     pin::Pin,

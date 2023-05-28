@@ -15,7 +15,7 @@ pub use executor::Executor;
 mod interrupt;
 pub use interrupt::Interrupt;
 
-mod io;
+pub mod io;
 
 /// UART serial port
 #[cfg(feature = "nb")]
