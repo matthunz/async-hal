@@ -5,6 +5,7 @@ use core::task::Waker;
 use futures::task::AtomicWaker;
 
 /// CAN bus
+#[cfg(feature = "nb")]
 pub mod can;
 
 /// Task executor
@@ -15,11 +16,12 @@ mod interrupt;
 pub use interrupt::Interrupt;
 
 /// UART serial port
+#[cfg(feature = "nb")]
 pub mod serial;
 
 /// Timers
 pub mod delay;
-pub use delay::{DelayMs, Timer};
+pub use delay::DelayMs;
 
 pub trait Scheduler {
     fn schedule(&self, waker: &Waker);

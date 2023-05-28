@@ -5,7 +5,9 @@ use core::{
 use embedded_hal::timer::Periodic;
 use futures::{Future, Stream};
 
+#[cfg(feature = "nb")]
 mod timer;
+#[cfg(feature = "nb")]
 pub use timer::Timer;
 
 pub trait DelayMs {
