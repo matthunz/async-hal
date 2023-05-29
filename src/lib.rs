@@ -8,7 +8,6 @@ use futures::{
 };
 
 /// CAN bus
-#[cfg(feature = "nb")]
 pub mod can;
 
 /// Task executor
@@ -22,8 +21,7 @@ pub use interrupt::Interrupt;
 /// Asynchronous IO
 pub mod io;
 
-/// UART serial port
-#[cfg(feature = "nb")]
+/// Serial port
 pub mod serial;
 
 /// Timers
