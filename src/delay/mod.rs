@@ -37,7 +37,9 @@ pub trait DelayMs {
     /// Delay for `ms` milliseconds.
     /// Starts a new delay and returns a [`Future`] that completes when either the timer expires.
     /// The returned future also implements [`Stream`] if this delay is [`Periodic`].
-    fn delay_ms(&mut self, ms: Self::Delay) -> DelayMsFuture<Self, Self::Delay>
+    /// 
+    /// When dropped, this future will attempt to cancel the current delay.
+    fn delay_ms(&mut self, ms: Self::Delay) -> DelayMsFuture<Self>
     where
         Self: Unpin,
     {
@@ -49,16 +51,16 @@ pub trait DelayMs {
     }
 }
 
-pub struct DelayMsFuture<'a, T: ?Sized, U> {
+pub struct DelayMsFuture<'a, T: ?Sized + DelayMs> {
     timer: &'a mut T,
-    ms: Option<U>,
+    ms: Option<T::Delay>,
     is_started: bool,
 }
 
-impl<T, U> Future for DelayMsFuture<'_, T, U>
+impl<T> Future for DelayMsFuture<'_, T>
 where
-    T: ?Sized + DelayMs<Delay = U> + Unpin,
-    U: Unpin,
+    T: ?Sized + DelayMs + Unpin,
+    T::Delay    : Unpin
 {
     type Output = Result<(), T::Error>;
 
@@ -74,14 +76,23 @@ where
     }
 }
 
-impl<T, U> Stream for DelayMsFuture<'_, T, U>
+impl<T> Stream for DelayMsFuture<'_, T>
 where
-    T: ?Sized + Periodic + DelayMs<Delay = U> + Unpin,
-    U: Unpin,
+    T: ?Sized + Periodic + DelayMs + Unpin,
+    T::Delay: Unpin
 {
     type Item = Result<(), T::Error>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         self.poll_unpin(cx).map(Some)
+    }
+}
+
+impl<T> Drop for DelayMsFuture<'_, T>
+where
+    T: ?Sized + DelayMs,
+{
+    fn drop(&mut self) {
+        self.timer.cancel().ok();
     }
 }
