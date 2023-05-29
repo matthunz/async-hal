@@ -54,10 +54,11 @@ fn main() -> ! {
     timer.listen(Event::Update);
     let mut timer = timer!(timer);
 
+    yellow.set_low();
+
     let task = async {
         loop {
             green.set_high();
-            yellow.set_low();
             red.set_low();
 
             timer.delay_ms(100).await.unwrap();
