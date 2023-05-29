@@ -3,50 +3,41 @@ use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-use embedded_hal::timer::CountDown;
+use embedded_hal::timer::{Cancel, CountDown};
 use fugit::MillisDurationU32;
-
-use void::Void;
 
 pub struct Timer<T, S> {
     timer: T,
-    is_started: bool,
     scheduler: S,
 }
 
 impl<T, S> Timer<T, S> {
     pub const fn new(timer: T, scheduler: S) -> Self {
-        Self {
-            timer,
-            scheduler,
-            is_started: false,
-        }
+        Self { timer, scheduler }
     }
 }
 
 impl<T, S> DelayMs for Timer<T, S>
 where
-    T: CountDown + Unpin,
+    T: CountDown + Cancel + Unpin,
     T::Time: From<MillisDurationU32>,
     S: Scheduler + Unpin,
 {
-    type Error = Void;
+    type Delay = u32;
+    type Error = T::Error;
 
-    fn poll_delay_ms(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context,
-        ms: u32,
-    ) -> Poll<Result<(), Self::Error>> {
-        if !self.is_started {
-            self.is_started = true;
-            self.timer.start(MillisDurationU32::millis(ms));
-        }
+    fn start(&mut self, ms: Self::Delay) -> Result<(), Self::Error> {
+        self.timer.start(MillisDurationU32::millis(ms));
+        Ok(())
+    }
 
+    fn cancel(&mut self) -> Result<(), Self::Error> {
+        self.timer.cancel()
+    }
+
+    fn poll_delay_ms(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         match self.timer.wait() {
-            Ok(()) => {
-                self.is_started = false;
-                Poll::Ready(Ok(()))
-            }
+            Ok(()) => Poll::Ready(Ok(())),
             Err(nb::Error::Other(_void)) => unreachable!(),
             Err(nb::Error::WouldBlock) => {
                 self.scheduler.schedule(cx.waker());

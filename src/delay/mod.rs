@@ -2,7 +2,7 @@ use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-use futures::{Future, Stream};
+use futures::{Future, FutureExt, Stream};
 
 pub use embedded_hal::timer::Periodic;
 
@@ -12,66 +12,76 @@ mod timer;
 pub use timer::Timer;
 
 pub trait DelayMs {
+    /// The type of duration to delay for.
+    type Delay;
+
+    /// The error returned on failure.
     type Error;
 
-    fn poll_delay_ms(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-        ms: u32,
-    ) -> Poll<Result<(), Self::Error>>;
+    /// Start a new delay.
+    fn start(&mut self, ms: Self::Delay) -> Result<(), Self::Error>;
 
-    fn poll_delay_ms_unpin(&mut self, cx: &mut Context, ms: u32) -> Poll<Result<(), Self::Error>>
+    /// Poll a delay of `ms` milliseconds.
+    fn poll_delay_ms(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
+
+    /// Attempt to cancel a delay in progress.
+    fn cancel(&mut self) -> Result<(), Self::Error>;
+
+    fn poll_delay_ms_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>
     where
         Self: Unpin,
     {
-        Pin::new(self).poll_delay_ms(cx, ms)
+        Pin::new(self).poll_delay_ms(cx)
     }
 
-    fn delay_ms(&mut self, ms: u32) -> DelayMsFuture<Self>
+    /// Delay for `ms` milliseconds.
+    /// Starts a new delay and returns a [`Future`] that completes when either the timer expires.
+    /// The returned future also implements [`Stream`] if this delay is [`Periodic`].
+    fn delay_ms(&mut self, ms: Self::Delay) -> DelayMsFuture<Self, Self::Delay>
     where
         Self: Unpin,
     {
-        DelayMsFuture { timer: self, ms }
-    }
-
-    fn interval(&mut self, ms: u32) -> Interval<Self>
-    where
-        Self: Periodic + Unpin,
-    {
-        Interval { timer: self, ms }
+        DelayMsFuture {
+            timer: self,
+            ms: Some(ms),
+            is_started: false,
+        }
     }
 }
 
-pub struct DelayMsFuture<'a, T: ?Sized> {
+pub struct DelayMsFuture<'a, T: ?Sized, U> {
     timer: &'a mut T,
-    ms: u32,
+    ms: Option<U>,
+    is_started: bool,
 }
 
-impl<T> Future for DelayMsFuture<'_, T>
+impl<T, U> Future for DelayMsFuture<'_, T, U>
 where
-    T: DelayMs + Unpin + ?Sized,
+    T: ?Sized + DelayMs<Delay = U> + Unpin,
+    U: Unpin,
 {
     type Output = Result<(), T::Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-        let ms = self.ms;
-        self.timer.poll_delay_ms_unpin(cx, ms)
+        if !self.is_started {
+            let ms = self.ms.take().unwrap();
+            self.timer.start(ms)?;
+
+            self.is_started = true;
+        }
+
+        self.timer.poll_delay_ms_unpin(cx)
     }
 }
 
-pub struct Interval<'a, T: ?Sized> {
-    timer: &'a mut T,
-    ms: u32,
-}
-
-impl<T> Stream for Interval<'_, T>
+impl<T, U> Stream for DelayMsFuture<'_, T, U>
 where
-    T: DelayMs + Unpin + ?Sized,
+    T: ?Sized + Periodic + DelayMs<Delay = U> + Unpin,
+    U: Unpin,
 {
     type Item = Result<(), T::Error>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        let ms = self.ms;
-        self.timer.poll_delay_ms_unpin(cx, ms).map(Some)
+        self.poll_unpin(cx).map(Some)
     }
 }
