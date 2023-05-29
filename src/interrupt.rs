@@ -2,14 +2,16 @@ use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-use futures::Future;
+use futures::Stream;
 
 pub trait Interrupt {
     type Error;
 
-    fn poll_interrupt(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
+    fn enable(&mut self) -> Result<(), Self::Error>;
 
-    fn cancel(&mut self) -> Result<bool, Self::Error>;
+    fn disable(&mut self) -> Result<(), Self::Error>;
+
+    fn poll_interrupt(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
 
     fn poll_interrupt_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>
     where
@@ -18,35 +20,45 @@ pub trait Interrupt {
         Pin::new(self).poll_interrupt(cx)
     }
 
-    /// This will cancel the interrupt on drop.
-    fn interrupt(&mut self) -> InterruptFuture<Self>
+    /// Enable the interrupt and return a [`Stream`] of events.
+    /// This will disable the interrupt on drop.
+    fn interrupts(&mut self) -> Interrupts<Self>
     where
         Self: Unpin,
     {
-        InterruptFuture { interrupt: self }
+        Interrupts {
+            interrupt: self,
+            is_enabled: false,
+        }
     }
 }
 
-pub struct InterruptFuture<'a, T: Interrupt + ?Sized> {
+pub struct Interrupts<'a, T: Interrupt + ?Sized> {
     interrupt: &'a mut T,
+    is_enabled: bool,
 }
 
-impl<T> Future for InterruptFuture<'_, T>
+impl<T> Stream for Interrupts<'_, T>
 where
     T: Interrupt + Unpin + ?Sized,
 {
-    type Output = Result<(), T::Error>;
+    type Item = Result<(), T::Error>;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-        self.interrupt.poll_interrupt_unpin(cx)
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        if !self.is_enabled {
+            self.interrupt.enable()?;
+            self.is_enabled = true;
+        }
+
+        self.interrupt.poll_interrupt_unpin(cx).map(Some)
     }
 }
 
-impl<T> Drop for InterruptFuture<'_, T>
+impl<T> Drop for Interrupts<'_, T>
 where
     T: Interrupt + ?Sized,
 {
     fn drop(&mut self) {
-        self.interrupt.cancel().ok();
+        self.interrupt.disable().ok();
     }
 }

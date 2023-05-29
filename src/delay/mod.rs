@@ -37,7 +37,7 @@ pub trait DelayMs {
     /// Delay for `ms` milliseconds.
     /// Starts a new delay and returns a [`Future`] that completes when either the timer expires.
     /// The returned future also implements [`Stream`] if this delay is [`Periodic`].
-    /// 
+    ///
     /// When dropped, this future will attempt to cancel the current delay.
     fn delay_ms(&mut self, ms: Self::Delay) -> DelayMsFuture<Self>
     where
@@ -60,7 +60,7 @@ pub struct DelayMsFuture<'a, T: ?Sized + DelayMs> {
 impl<T> Future for DelayMsFuture<'_, T>
 where
     T: ?Sized + DelayMs + Unpin,
-    T::Delay    : Unpin
+    T::Delay: Unpin,
 {
     type Output = Result<(), T::Error>;
 
@@ -79,7 +79,7 @@ where
 impl<T> Stream for DelayMsFuture<'_, T>
 where
     T: ?Sized + Periodic + DelayMs + Unpin,
-    T::Delay: Unpin
+    T::Delay: Unpin,
 {
     type Item = Result<(), T::Error>;
 
