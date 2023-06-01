@@ -1,8 +1,8 @@
+use super::AsyncRead;
 use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-use super::AsyncRead;
 
 pub trait AsyncBufRead: AsyncRead {
     /// Attempts to return the contents of the internal buffer, filling it with more data
@@ -47,4 +47,17 @@ pub trait AsyncBufRead: AsyncRead {
     /// [`poll_read`]: AsyncRead::poll_read
     /// [`poll_fill_buf`]: AsyncBufRead::poll_fill_buf
     fn consume(self: Pin<&mut Self>, amt: usize);
+}
+
+impl AsyncBufRead for &[u8] {
+    fn poll_fill_buf(
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+    ) -> Poll<Result<&[u8], Self::Error>> {
+        Poll::Ready(Ok(*self))
+    }
+
+    fn consume(mut self: Pin<&mut Self>, amt: usize) {
+        *self = &self[amt..];
+    }
 }

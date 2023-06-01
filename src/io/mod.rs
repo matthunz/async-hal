@@ -4,14 +4,23 @@ use core::{
 };
 use futures::{ready, Sink, SinkExt, Stream, StreamExt};
 
-mod async_read;
-pub use async_read::AsyncRead;
-
 mod async_buf_read;
 pub use async_buf_read::AsyncBufRead;
 
+mod async_read;
+pub use async_read::AsyncRead;
+
+mod async_write;
+pub use async_write::AsyncWrite;
+
 mod buf_reader;
 pub use buf_reader::BufReader;
+
+mod copy_buf;
+pub use copy_buf::copy_buf;
+
+mod cursor;
+pub use cursor::Cursor;
 
 mod read;
 pub use read::Read;
@@ -56,18 +65,6 @@ where
         self.idx = 0;
         Poll::Ready(Ok(used))
     }
-}
-
-pub trait AsyncWrite {
-    type Error;
-
-    fn poll_write(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-        buf: &[u8],
-    ) -> Poll<Result<usize, Self::Error>>;
-
-    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
 }
 
 /// Writer for a sink of bytes

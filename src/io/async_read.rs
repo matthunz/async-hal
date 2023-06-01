@@ -1,9 +1,9 @@
+use super::Read;
 use core::{
     pin::Pin,
     task::{Context, Poll},
 };
 use void::Void;
-use super::Read;
 
 /// Read bytes asynchronously.
 pub trait AsyncRead {

@@ -1,3 +1,4 @@
+use super::AsyncRead;
 use core::{
     marker::PhantomPinned,
     pin::Pin,
@@ -5,7 +6,6 @@ use core::{
 };
 use futures::{ready, Future};
 use pin_project_lite::pin_project;
-use super::AsyncRead;
 
 pin_project! {
     /// A future which can be used to easily read available number of bytes to fill

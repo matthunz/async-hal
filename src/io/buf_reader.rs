@@ -22,7 +22,6 @@ pin_project! {
     /// When the `BufReader` is dropped, the contents of its buffer will be
     /// discarded. Creating multiple instances of a `BufReader` on the same
     /// stream can cause data loss.
-    #[cfg_attr(docsrs, doc(cfg(feature = "io-util")))]
     pub struct BufReader<'buf, R> {
         #[pin]
         inner: R,
@@ -34,7 +33,7 @@ pin_project! {
 
 impl<'buf, R: AsyncRead> BufReader<'buf, R> {
     /// Creates a new `BufReader` with the specified buffer capacity.
-    pub fn with_capacity(buf: &'buf mut [u8], inner: R) -> Self {
+    pub fn new(buf: &'buf mut [u8], inner: R) -> Self {
         Self {
             inner,
             buf,
