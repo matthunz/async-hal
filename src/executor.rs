@@ -11,6 +11,7 @@ static READY: AtomicUsize = AtomicUsize::new(0);
 static IS_LOCKED: AtomicBool = AtomicBool::new(false);
 
 /// Task executor singleton
+#[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
 pub struct Executor<T, const N: usize> {
     tasks: [UnsafeCell<MaybeUninit<T>>; N],
     set: AtomicUsize,

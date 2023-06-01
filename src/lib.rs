@@ -44,8 +44,10 @@ pub mod can;
 
 /// Task executor
 #[cfg(feature = "executor")]
+#[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
 pub mod executor;
 #[cfg(feature = "executor")]
+#[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
 pub use executor::Executor;
 
 /// Interrupt stream
