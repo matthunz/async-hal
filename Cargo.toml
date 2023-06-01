@@ -10,7 +10,7 @@ repository = "https://github.com/matthunz/async-hal"
 mock = []
 executor = []
 nb = ["fugit", "dep:nb", "void"]
-default = ["bxcan", "executor", "mock", "nb"]
+full = ["bxcan", "executor", "mock", "nb"]
 
 [dependencies]
 bxcan = { version = "0.7.0", optional = true }
