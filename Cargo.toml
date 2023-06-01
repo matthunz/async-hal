@@ -1,6 +1,6 @@
 [package]
 name = "async-hal"
-version = "0.1.0-alpha.3"
+version = "0.1.0-alpha.4"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Async hardware abstraction layer for embedded devices"

@@ -44,6 +44,22 @@ impl<T: Scheduler> Scheduler for &'_ T {
     }
 }
 
+/// Run `future` to completion and return its output.
+/// This will repeatedly poll the future and call `wait()`.
+///
+/// This is useful for microcontrollers that can be set into a low-power mode while waiting,
+/// such as using Cortex-M's `wfi` instruction.
+/// ```
+/// use futures::pin_mut;
+///
+/// let task = async { true };
+/// pin_mut!(task);
+///
+/// let output = async_hal::block_on(task, || {
+///     dbg!("Waiting!");
+/// });
+/// assert!(output);
+/// ```
 pub fn block_on<F, W>(mut future: F, mut wait: W) -> F::Output
 where
     F: Future + Unpin,
