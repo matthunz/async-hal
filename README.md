@@ -8,28 +8,25 @@ Async hardware abstraction layer for embedded devices
 ## Examples
 ### [Blinky](https://github.com/matthunz/async-hal/tree/main/examples/blinky)
 ```rust
+use async_hal::delay::DelayMs;
+
+let mut led = _;
+let mut timer = _;
+
 loop {
     led.toggle();
     timer.delay_ms(1_000).await?;
 }
 ```
 
-### [Traffic light](https://github.com/matthunz/async-hal/tree/main/examples/traffic-light)
-
+### Serial port loopback
 ```rust
+use async_hal::io;
+
+let mut serial_tx = _;
+let mut serial_rx = _;
+
 loop {
-    green.set_high();
-    red.set_low();
-
-    timer.delay_ms(100).await?;
-
-    green.set_low();
-    yellow.set_high();
-
-    timer.delay_ms(5_000).await?;
-
-    yellow.set_low();
-    red.set_high();
-
-    timer.delay_ms(100).await?;
+    io::copy_buf(&mut serial_tx, &mut serial_rx).await?
 }
+```
