@@ -1,14 +1,14 @@
 #![cfg_attr(not(feature = "mock"), no_std)]
 
 //! Async hardware abstraction layer for embedded devices.
-//! 
+//!
 //! The easiest way to get started is to enable all features.
-//! 
+//!
 //! ```toml
 //! [dependencies]
 //! async-hal = { version = "...", features = ["full"] }
 //! ```
-//! 
+//!
 //! Or by using `cargo add`
 //! ```sh
 //! cargo add async-hal --features full
@@ -25,7 +25,7 @@
 //! recommended that you use the `full` feature flag which will enable all public APIs.
 //! Beware though that this will pull in many extra dependencies that you may not
 //! need.
-//! 
+//!
 //! [feature flags]: https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section
 //!
 //! - `full`: Enables all features listed below except `mock`.
