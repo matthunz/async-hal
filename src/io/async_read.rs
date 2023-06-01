@@ -37,7 +37,7 @@ pub trait AsyncRead {
     /// # futures::pin_mut!(fut);
     /// # async_hal::block_on(fut, || {}).unwrap();
     ///
-    /// assert_eq!(bytes, buf);
+    /// assert_eq!([1, 2, 3], buf);
     /// ```
     fn read<'a>(&'a mut self, buf: &'a mut [u8]) -> Read<'a, Self>
     where
@@ -74,16 +74,14 @@ impl AsyncRead for &[u8] {
     type Error = Void;
 
     fn poll_read(
-        self: Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         _cx: &mut Context,
         buf: &mut [u8],
     ) -> Poll<Result<usize, Void>> {
-        let mut used = 0;
-        for (src, dst) in self.iter().zip(buf) {
-            *dst = *src;
-            used += 1;
-        }
-
-        Poll::Ready(Ok(used))
+        let amt = core::cmp::min(self.len(), buf.len());
+        let (a, b) = self.split_at(amt);
+        buf[..amt].copy_from_slice(a);
+        *self = b;
+        Poll::Ready(Ok(amt))
     }
 }

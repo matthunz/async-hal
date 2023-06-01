@@ -45,11 +45,11 @@ impl AsyncWrite for &'_ mut [u8] {
         _cx: &mut Context,
         buf: &[u8],
     ) -> Poll<Result<usize, Self::Error>> {
-        let used = core::cmp::min(buf.len(), self.len());
-        let (a, b) = core::mem::take(&mut *self).split_at_mut(used);
-        a.copy_from_slice(&buf[..used]);
+        let amt = core::cmp::min(buf.len(), self.len());
+        let (a, b) = core::mem::replace(&mut *self, &mut []).split_at_mut(amt);
+        a.copy_from_slice(&buf[..amt]);
         *self = b;
-        Poll::Ready(Ok(used))
+        Poll::Ready(Ok(amt))
     }
 
     fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {

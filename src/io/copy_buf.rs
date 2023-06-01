@@ -29,11 +29,11 @@ struct CopyBuf<'a, R: ?Sized, W: ?Sized> {
 /// On success, the total number of bytes that were copied from `reader` to
 /// `writer` is returned.
 ///
-/// This is a [`tokio::io::copy`] alternative for [`AsyncBufRead`] readers
+/// This is a [`async_hal::io::copy`] alternative for [`AsyncBufRead`] readers
 /// with no extra buffer allocation, since [`AsyncBufRead`] allow access
 /// to the reader's inner buffer.
 ///
-/// [`tokio::io::copy`]: crate::io::copy
+/// [`async_hal::io::copy`]: crate::io::copy
 /// [`AsyncBufRead`]: crate::io::AsyncBufRead
 ///
 /// # Errors
@@ -49,15 +49,15 @@ struct CopyBuf<'a, R: ?Sized, W: ?Sized> {
 ///
 /// # let task = async {
 /// let mut reader: &[u8] = b"hello";
-/// let mut writer: &mut [u8] = &mut [0; 5];
+/// let mut writer = [0; 5];
 ///
-/// io::copy_buf(&mut reader, &mut writer).await?;
+/// io::copy_buf(&mut reader, &mut writer.as_mut()).await?;
 ///
 /// assert_eq!(b"hello", &writer[..]);
 /// # Ok::<_, void::Void>(())
 /// # };
-/// futures::pin_mut!(task);
-/// async_hal::block_on(task, || {}).unwrap();
+/// # futures::pin_mut!(task);
+/// # async_hal::block_on(task, || {}).unwrap();
 /// ```
 pub async fn copy_buf<'a, R, W>(reader: &'a mut R, writer: &'a mut W) -> Result<u64, R::Error>
 where
