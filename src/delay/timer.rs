@@ -1,4 +1,5 @@
-use crate::{DelayMs, Scheduler};
+use super::DelayMs;
+use crate::Scheduler;
 use core::{
     pin::Pin,
     task::{Context, Poll},

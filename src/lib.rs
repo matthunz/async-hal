@@ -1,6 +1,26 @@
 #![cfg_attr(not(feature = "mock"), no_std)]
 
-//! Async hardware abstraction layer for embedded devices
+//! Async hardware abstraction layer for embedded devices.
+//!
+//! ## Feature flags
+//!
+//! Async-hal uses a set of [feature flags] to reduce the amount of compiled code. It
+//! is possible to just enable certain features over others. By default, async-hal
+//! does not enable any features but allows one to enable a subset for their use
+//! case. Below is a list of the available feature flags. You may also notice
+//! above each function, struct and trait there is listed one or more feature flags
+//! that are required for that item to be used. If you are new to async-hal it is
+//! recommended that you use the `full` feature flag which will enable all public APIs.
+//! Beware though that this will pull in many extra dependencies that you may not
+//! need.
+//! 
+//! [feature flags]: https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section
+//!
+//! - `full`: Enables all features listed below except `mock`.
+//! - `executor`: Enables the `async_hal::executor` module.
+//! - `nb`: Enables async wrappers for non-blocking interfaces (such as from `embedded_hal`).
+//! - `bxcan`: Enables CAN support for stm32 devices with [`bxcan`](https://docs.rs/bxcan/).
+
 use core::task::{Context, Poll, Waker};
 use futures::{
     task::{noop_waker, AtomicWaker},
@@ -11,7 +31,9 @@ use futures::{
 pub mod can;
 
 /// Task executor
+#[cfg(feature = "executor")]
 pub mod executor;
+#[cfg(feature = "executor")]
 pub use executor::Executor;
 
 /// Interrupt stream
@@ -24,9 +46,8 @@ pub mod io;
 /// Serial port
 pub mod serial;
 
-/// Timers
+/// Delay timers
 pub mod delay;
-pub use delay::DelayMs;
 
 pub trait Scheduler {
     fn schedule(&self, waker: &Waker);
