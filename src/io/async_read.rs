@@ -3,9 +3,7 @@ use core::{
     task::{Context, Poll},
 };
 use void::Void;
-
-mod read;
-pub use read::Read;
+use super::Read;
 
 /// Read bytes asynchronously.
 pub trait AsyncRead {

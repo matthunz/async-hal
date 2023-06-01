@@ -7,6 +7,15 @@ use futures::{ready, Sink, SinkExt, Stream, StreamExt};
 mod async_read;
 pub use async_read::AsyncRead;
 
+mod async_buf_read;
+pub use async_buf_read::AsyncBufRead;
+
+mod buf_reader;
+pub use buf_reader::BufReader;
+
+mod read;
+pub use read::Read;
+
 /// Reader for a stream of bytes
 pub const fn reader<T, E>(stream: T) -> Reader<T>
 where
