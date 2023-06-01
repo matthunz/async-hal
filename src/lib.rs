@@ -1,8 +1,5 @@
 #![cfg_attr(not(feature = "mock"), no_std)]
 
-#![cfg_attr(docsrs, feature(full))]
-#![cfg_attr(docsrs, feature(mock))]
-
 //! Async hardware abstraction layer for embedded devices.
 //! 
 //! The easiest way to get started is to enable all features.
