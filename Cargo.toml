@@ -6,6 +6,12 @@ license = "MIT OR Apache-2.0"
 description = "Async hardware abstraction layer for embedded devices"
 repository = "https://github.com/matthunz/async-hal"
 
+[workspace]
+members = [
+    "./",
+    "stm32"
+]
+
 [features]
 mock = []
 executor = []

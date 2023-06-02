@@ -1,0 +1,11 @@
+[package]
+name = "async-hal-stm32"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+stm32f103 = ["stm32f1xx-hal/stm32f103"]
+default = ["stm32f103"]
+
+[dependencies]
+stm32f1xx-hal = "0.10.0"
