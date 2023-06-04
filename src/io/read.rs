@@ -42,7 +42,7 @@ where
     fn poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<usize, R::Error>> {
         let me = self.project();
 
-        ready!(Pin::new(me.reader).poll_read(cx, me.buf))?;
-        Poll::Ready(Ok(me.buf.len()))
+        let amt = ready!(Pin::new(me.reader).poll_read(cx, me.buf))?;
+        Poll::Ready(Ok(amt))
     }
 }

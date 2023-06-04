@@ -22,6 +22,9 @@ pub use copy_buf::copy_buf;
 mod read;
 pub use read::Read;
 
+mod write_all;
+pub use write_all::WriteAll;
+
 /// Reader for a stream of bytes
 pub const fn reader<T, E>(stream: T) -> Reader<T>
 where
