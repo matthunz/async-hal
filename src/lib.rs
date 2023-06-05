@@ -63,6 +63,8 @@ pub mod serial;
 /// Delay timers
 pub mod delay;
 
+pub mod usb;
+
 pub trait Scheduler {
     fn schedule(&self, waker: &Waker);
 }
