@@ -6,6 +6,9 @@ use futures::{Future, FutureExt, Stream};
 
 pub use embedded_hal::timer::Periodic;
 
+mod ready;
+pub use ready::{ready, AlreadyStarted, Ready};
+
 #[cfg(feature = "nb")]
 mod timer;
 #[cfg(feature = "nb")]
