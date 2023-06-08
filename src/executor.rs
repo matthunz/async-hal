@@ -38,12 +38,6 @@ impl<F> Executor<F> {
     where
         F: Future,
     {
-        let mut future = self.future.get().unwrap().borrow_mut();
-
-        // Safety: `future` is guranteed to be static
-        let pinned = unsafe { Pin::new_unchecked(&mut *future) };
-
-        // TODO pend interrupt on wakeup
         static VTABLE: RawWakerVTable = RawWakerVTable::new(
             |ptr| RawWaker::new(ptr, &VTABLE),
             |ptr| {
@@ -56,11 +50,14 @@ impl<F> Executor<F> {
             },
             |_| {},
         );
-
         let raw_waker = RawWaker::new(self.interrupt as *const dyn Interrupt as *const (), &VTABLE);
         let waker = unsafe { Waker::from_raw(raw_waker) };
-
         let mut cx = Context::from_waker(&waker);
+
+        let mut future = self.future.get().unwrap().borrow_mut();
+
+        // Safety: `future` is guranteed to be static
+        let pinned = unsafe { Pin::new_unchecked(&mut *future) };
         pinned.poll(&mut cx)
     }
 }

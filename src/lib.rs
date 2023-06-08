@@ -40,7 +40,7 @@ use futures::{task::noop_waker, Future, FutureExt};
 /// CAN bus
 pub mod can;
 
-mod executor;
+pub mod executor;
 pub use executor::Executor;
 
 /// Interrupt stream

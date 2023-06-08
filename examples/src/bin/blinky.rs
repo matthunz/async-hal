@@ -3,23 +3,31 @@
 #![feature(type_alias_impl_trait)]
 
 use crate::hal::{
-    pac::{interrupt, Interrupt, Peripherals},
+    pac::{interrupt, Peripherals},
     prelude::*,
     timer::Event,
 };
 use async_hal::{
     delay::{DelayMs, Timer},
+    executor::{Executor, Interrupt},
     scheduler::Ready,
-    Executor,
 };
 use async_hal_examples as _;
 use core::future::Future;
-use cortex_m::asm::wfe;
+use cortex_m::{asm::wfe, peripheral::NVIC};
 use cortex_m_rt::entry;
 use stm32f1xx_hal as hal;
 
 type App = impl Future<Output = ()>;
-static mut EXECUTOR: Executor<App> = Executor::new();
+static mut EXECUTOR: Executor<App> = Executor::new(&Tim2);
+
+struct Tim2;
+
+impl Interrupt for Tim2 {
+    fn pend(&self) {
+        NVIC::pend(stm32f1xx_hal::pac::Interrupt::TIM2);
+    }
+}
 
 #[interrupt]
 fn TIM2() {
@@ -60,7 +68,7 @@ fn main() -> ! {
 
     // Enable TIM2 interrupt
     unsafe {
-        cortex_m::peripheral::NVIC::unmask(Interrupt::TIM2);
+        cortex_m::peripheral::NVIC::unmask(stm32f1xx_hal::pac::Interrupt::TIM2);
     }
 
     // Run in low-power mode
