@@ -16,13 +16,13 @@ use async_hal_examples as _;
 use core::future::Future;
 use cortex_m::{asm::wfe, peripheral::NVIC};
 use cortex_m_rt::entry;
-use stm32f1xx_hal as hal;
+use stm32f1xx_hal::{self as hal, pac};
 
 struct Tim2;
 
 impl Interrupt for Tim2 {
     fn pend(&self) {
-        NVIC::pend(stm32f1xx_hal::pac::Interrupt::TIM2);
+        NVIC::pend(pac::Interrupt::TIM2);
     }
 }
 
@@ -68,7 +68,7 @@ fn main() -> ! {
 
     // Enable TIM2 interrupt
     unsafe {
-        cortex_m::peripheral::NVIC::unmask(stm32f1xx_hal::pac::Interrupt::TIM2);
+        NVIC::unmask(pac::Interrupt::TIM2);
     }
 
     // Run in low-power mode
