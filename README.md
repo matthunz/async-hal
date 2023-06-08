@@ -5,8 +5,8 @@ Async hardware abstraction layer for embedded devices
 [![Rust Documentation](https://img.shields.io/badge/api-rustdoc-blue.svg)](https://docs.rs/async-hal)
 [![CI](https://github.com/matthunz/async-hal/actions/workflows/rust.yml/badge.svg)](https://github.com/matthunz/async-hal/actions/workflows/rust.yml)
 
-## Examples
-### [Blinky](https://github.com/matthunz/async-hal/tree/main/examples/blinky)
+## [Examples](https://github.com/matthunz/async-hal/tree/main/examples/)
+### [Blinky](https://github.com/matthunz/async-hal/tree/main/examples/bin/blinky)
 ```rust
 use async_hal::delay::DelayMs;
 

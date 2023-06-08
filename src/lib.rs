@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "mock"), no_std)]
 
 //! Async hardware abstraction layer for embedded devices.
+//! This crate provides zero-cost utilities for async IO with `#![no-std]`.
 //!
 //! The easiest way to get started is to enable all features.
 //!
@@ -33,17 +34,13 @@
 //! - `nb`: Enables async wrappers for non-blocking interfaces (such as from `embedded_hal`).
 //! - `bxcan`: Enables CAN support for stm32 devices with [`bxcan`](https://docs.rs/bxcan/).
 
-use core::task::{Context, Poll, Waker};
-use futures::{
-    task::{noop_waker, AtomicWaker},
-    Future, FutureExt,
-};
+use core::task::{Context, Poll};
+use futures::{task::noop_waker, Future, FutureExt};
 
 /// CAN bus
 pub mod can;
 
-/// Task executor
-pub mod executor;
+mod executor;
 pub use executor::Executor;
 
 /// Interrupt stream
@@ -53,33 +50,18 @@ pub use interrupt::Interrupt;
 /// Asynchronous IO
 pub mod io;
 
+/// Task scheduler
+pub mod scheduler;
+pub use scheduler::Scheduler;
+
 /// Serial port
 pub mod serial;
 
 /// Delay timers
 pub mod delay;
 
+/// Async USB
 pub mod usb;
-
-pub trait Scheduler {
-    fn schedule(&self, waker: &Waker);
-}
-
-impl Scheduler for AtomicWaker {
-    fn schedule(&self, waker: &Waker) {
-        self.register(waker)
-    }
-}
-
-impl<T: Scheduler> Scheduler for &'_ T {
-    fn schedule(&self, waker: &Waker) {
-        (*self).schedule(waker)
-    }
-}
-
-impl Scheduler for () {
-    fn schedule(&self, _waker: &Waker) {}
-}
 
 /// Run `future` to completion and return its output.
 /// This will repeatedly poll the future and call `wait()`.

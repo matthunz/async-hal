@@ -17,7 +17,7 @@ mod tests {
             data: vec![1, 2, 3],
         };
 
-        block_on(tx.send(frame.clone()), || {});
+        block_on(tx.send(frame.clone()), || {}).unwrap();
 
         assert_eq!(tx.transmit.frames[0], frame);
     }
