@@ -18,9 +18,6 @@ use cortex_m::{asm::wfe, peripheral::NVIC};
 use cortex_m_rt::entry;
 use stm32f1xx_hal as hal;
 
-type App = impl Future<Output = ()>;
-static mut EXECUTOR: Executor<App> = Executor::new(&Tim2);
-
 struct Tim2;
 
 impl Interrupt for Tim2 {
@@ -28,6 +25,9 @@ impl Interrupt for Tim2 {
         NVIC::pend(stm32f1xx_hal::pac::Interrupt::TIM2);
     }
 }
+
+type App = impl Future<Output = ()>;
+static mut EXECUTOR: Executor<Tim2, App> = Executor::new(Tim2);
 
 #[interrupt]
 fn TIM2() {

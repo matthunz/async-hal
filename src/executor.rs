@@ -11,17 +11,17 @@ pub trait Interrupt {
 }
 
 /// Task executor for a single `'static` future.
-pub struct Executor<F> {
+pub struct Executor<I, F> {
+    interrupt: I,
     future: OnceCell<RefCell<F>>,
-    interrupt: &'static dyn Interrupt,
 }
 
-impl<F> Executor<F> {
+impl<I, F> Executor<I, F> {
     /// Create a new empty executor.
-    pub const fn new(interrupt: &'static impl Interrupt) -> Self {
+    pub const fn new(interrupt: I) -> Self {
         Self {
             future: OnceCell::new(),
-            interrupt: interrupt,
+            interrupt,
         }
     }
 
@@ -36,21 +36,22 @@ impl<F> Executor<F> {
     /// Poll the current [`Future`] on the executor.
     pub fn poll(&'static self) -> Poll<F::Output>
     where
+        I: Interrupt,
         F: Future,
     {
         static VTABLE: RawWakerVTable = RawWakerVTable::new(
             |ptr| RawWaker::new(ptr, &VTABLE),
             |ptr| {
-                let interrupt = unsafe { *ptr.cast::<&dyn Interrupt>() };
-                interrupt.pend();
+                let me = unsafe { *ptr.cast::<&dyn Interrupt>() };
+                me.pend();
             },
             |ptr| {
-                let interrupt = unsafe { *ptr.cast::<&dyn Interrupt>() };
-                interrupt.pend();
+                let me = unsafe { *ptr.cast::<&dyn Interrupt>() };
+                me.pend();
             },
             |_| {},
         );
-        let raw_waker = RawWaker::new(self.interrupt as *const dyn Interrupt as *const (), &VTABLE);
+        let raw_waker = RawWaker::new(self as *const dyn Interrupt as *const (), &VTABLE);
         let waker = unsafe { Waker::from_raw(raw_waker) };
         let mut cx = Context::from_waker(&waker);
 
@@ -59,5 +60,11 @@ impl<F> Executor<F> {
         // Safety: `future` is guranteed to be static
         let pinned = unsafe { Pin::new_unchecked(&mut *future) };
         pinned.poll(&mut cx)
+    }
+}
+
+impl<I: Interrupt, F> Interrupt for Executor<I, F> {
+    fn pend(&self) {
+        self.interrupt.pend()
     }
 }
