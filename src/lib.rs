@@ -43,11 +43,7 @@ use futures::{
 pub mod can;
 
 /// Task executor
-#[cfg(feature = "executor")]
-#[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
 pub mod executor;
-#[cfg(feature = "executor")]
-#[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
 pub use executor::Executor;
 
 /// Interrupt stream
@@ -79,6 +75,10 @@ impl<T: Scheduler> Scheduler for &'_ T {
     fn schedule(&self, waker: &Waker) {
         (*self).schedule(waker)
     }
+}
+
+impl Scheduler for () {
+    fn schedule(&self, _waker: &Waker) {}
 }
 
 /// Run `future` to completion and return its output.
