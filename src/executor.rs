@@ -1,10 +1,11 @@
 use core::{
-    cell::{OnceCell, RefCell},
+    cell::RefCell,
     pin::Pin,
     task::{Context, Poll},
 };
 use futures::Future;
 use noop_waker::noop_waker;
+use once_cell::unsync::OnceCell;
 
 pub struct Executor<F> {
     future: OnceCell<RefCell<F>>,
