@@ -9,7 +9,7 @@ use crate::hal::{
 };
 use async_hal::{
     delay::{DelayMs, Timer},
-    executor::{Executor, Interrupt},
+    executor::{Executor, NonPending},
 };
 use async_hal_examples as _;
 use core::future::Future;
@@ -18,16 +18,8 @@ use cortex_m_rt::entry;
 use defmt::println;
 use stm32f1xx_hal::{self as hal, pac};
 
-struct Tim2;
-
-impl Interrupt for Tim2 {
-    fn pend(&self) {
-        NVIC::pend(pac::Interrupt::TIM2);
-    }
-}
-
 type App = impl Future<Output = ()>;
-static mut EXECUTOR: Executor<Tim2, App> = Executor::new(Tim2);
+static mut EXECUTOR: Executor<NonPending, App> = Executor::non_pending();
 
 #[interrupt]
 fn TIM2() {

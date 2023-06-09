@@ -7,7 +7,7 @@ use crate::hal::{
     prelude::*,
 };
 use async_hal::{
-    executor::{Executor, Interrupt},
+    executor::{Executor, NonPending},
     io::{AsyncRead, AsyncWrite},
     serial::{Reader, SerialRead, SerialWrite, Writer},
 };
@@ -19,16 +19,8 @@ use defmt::println;
 use hal::serial::{Config, Serial};
 use stm32f1xx_hal::{self as hal, pac};
 
-struct Tim2;
-
-impl Interrupt for Tim2 {
-    fn pend(&self) {
-        NVIC::pend(pac::Interrupt::TIM2);
-    }
-}
-
 type App = impl Future<Output = ()>;
-static mut EXECUTOR: Executor<Tim2, App> = Executor::new(Tim2);
+static mut EXECUTOR: Executor<NonPending, App> = Executor::non_pending();
 
 #[interrupt]
 fn USART3() {

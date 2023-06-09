@@ -7,7 +7,14 @@ use futures::Future;
 use once_cell::unsync::OnceCell;
 
 pub trait Interrupt {
+    /// Pend this interrupt handler to run.
     fn pend(&self);
+}
+
+pub struct NonPending;
+
+impl Interrupt for NonPending {
+    fn pend(&self) {}
 }
 
 /// Task executor for a single `'static` future.
@@ -71,6 +78,12 @@ impl<I, F> Executor<I, F> {
         // Safety: `future` is guranteed to be static
         let pinned = unsafe { Pin::new_unchecked(&mut *future) };
         pinned.poll(&mut cx)
+    }
+}
+
+impl<F> Executor<NonPending, F> {
+    pub const fn non_pending() -> Self {
+        Self::new(NonPending)
     }
 }
 
