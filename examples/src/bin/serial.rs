@@ -2,10 +2,6 @@
 #![no_std]
 #![feature(type_alias_impl_trait)]
 
-use crate::hal::{
-    pac::{interrupt, Peripherals},
-    prelude::*,
-};
 use async_hal::{
     executor::{Executor, NonPending},
     io::{AsyncRead, AsyncWrite},
@@ -16,8 +12,11 @@ use core::future::Future;
 use cortex_m::peripheral::NVIC;
 use cortex_m_rt::entry;
 use defmt::println;
-use hal::serial::{Config, Serial};
-use stm32f1xx_hal::{self as hal, pac};
+use stm32f1xx_hal::{
+    pac::{self, interrupt, Peripherals},
+    prelude::*,
+    serial::{Config, Serial},
+};
 
 type App = impl Future<Output = ()>;
 static mut EXECUTOR: Executor<NonPending, App> = Executor::non_pending();

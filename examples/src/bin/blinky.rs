@@ -2,11 +2,6 @@
 #![no_std]
 #![feature(type_alias_impl_trait)]
 
-use crate::hal::{
-    pac::{interrupt, Peripherals},
-    prelude::*,
-    timer::Event,
-};
 use async_hal::{
     delay::{DelayMs, Timer},
     executor::{Executor, NonPending},
@@ -16,7 +11,11 @@ use core::future::Future;
 use cortex_m::peripheral::NVIC;
 use cortex_m_rt::entry;
 use defmt::println;
-use stm32f1xx_hal::{self as hal, pac};
+use stm32f1xx_hal::{
+    pac::{self, interrupt, Peripherals},
+    prelude::*,
+    timer::Event,
+};
 
 type App = impl Future<Output = ()>;
 static mut EXECUTOR: Executor<NonPending, App> = Executor::non_pending();
