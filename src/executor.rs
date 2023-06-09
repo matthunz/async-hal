@@ -11,6 +11,7 @@ pub trait Interrupt {
 }
 
 /// Task executor for a single `'static` future.
+#[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
 pub struct Executor<I, F> {
     interrupt: I,
     future: OnceCell<RefCell<F>>,

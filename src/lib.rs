@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "mock"), no_std)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 //! Async hardware abstraction layer for embedded devices.
 //! This crate provides zero-cost utilities for async IO with `#![no-std]`.
@@ -29,30 +30,47 @@
 //!
 //! [feature flags]: https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section
 //!
-//! - `full`: Enables all features listed below except `mock`.
+//! - `full`: Enables all features listed below except `mock` and `bxcan`.
+//! - `can`: Enables the `async_hal::can` module.
+//! - `delay`: Enables the `async_hal::delay` module.
 //! - `executor`: Enables the `async_hal::executor` module.
+//! - `io`: Enables the `async_hal::io` module.
+//! - `serial`: Enables the `async_hal::serial` module.
 //! - `nb`: Enables async wrappers for non-blocking interfaces (such as from `embedded_hal`).
 //! - `bxcan`: Enables CAN support for stm32 devices with [`bxcan`](https://docs.rs/bxcan/).
 
 use core::task::{Context, Poll};
 use futures::{task::noop_waker, Future, FutureExt};
 
+#[cfg_attr(docsrs, doc(cfg(feature = "can")))]
+#[cfg(feature = "can")]
 /// CAN bus
 pub mod can;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
+#[cfg(feature = "executor")]
+/// Task executor
 pub mod executor;
+#[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
+#[cfg(feature = "executor")]
 pub use executor::Executor;
 
 /// Interrupt stream
 mod interrupt;
 pub use interrupt::Interrupt;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "io")))]
+#[cfg(feature = "io")]
 /// Asynchronous IO
 pub mod io;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "serial")))]
+#[cfg(feature = "serial")]
 /// Serial port
 pub mod serial;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "delay")))]
+#[cfg(feature = "delay")]
 /// Delay timers
 pub mod delay;
 
