@@ -8,7 +8,7 @@ use futures::Sink;
 /// Write half of a UART serial port.
 pub struct Writer<T, W> {
     // Generic non-blocking serial writer
-    write: T,
+    pub write: T,
 
     // Cache of the next word to send
     word: Option<W>,

@@ -32,7 +32,7 @@ where
 
     fn poll_next(mut self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Option<Self::Item>> {
         match self.read.read() {
-            Ok(frame) => Poll::Ready(Some(Ok(frame))),
+            Ok(word) => Poll::Ready(Some(Ok(word))),
             Err(nb::Error::WouldBlock) => Poll::Pending,
             Err(nb::Error::Other(error)) => Poll::Ready(Some(Err(error))),
         }

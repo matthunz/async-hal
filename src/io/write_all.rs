@@ -40,12 +40,12 @@ where
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let me = self.project();
         while !me.buf.is_empty() {
-            let n = ready!(Pin::new(&mut *me.writer).poll_write(cx, me.buf))?;
+            let used = ready!(Pin::new(&mut *me.writer).poll_write(cx, me.buf))?;
             {
-                let (_, rest) = mem::take(&mut *me.buf).split_at(n);
-                *me.buf = rest;
+                let (_, remaining) = mem::take(&mut *me.buf).split_at(used);
+                *me.buf = remaining;
             }
-            if n == 0 {
+            if used == 0 {
                 todo!()
             }
         }

@@ -36,13 +36,12 @@ where
 }
 
 pub struct Reader<T> {
-    stream: T,
-    idx: usize,
+    pub stream: T,
 }
 
 impl<T> Reader<T> {
     pub const fn new(stream: T) -> Self {
-        Self { stream, idx: 0 }
+        Self { stream }
     }
 }
 
@@ -57,15 +56,9 @@ where
         cx: &mut Context,
         buf: &mut [u8],
     ) -> Poll<Result<usize, Self::Error>> {
-        while self.idx < buf.len() {
-            let byte = ready!(self.stream.poll_next_unpin(cx)).unwrap()?;
-            buf[self.idx] = byte;
-            self.idx += 1;
-        }
-
-        let used = self.idx;
-        self.idx = 0;
-        Poll::Ready(Ok(used))
+        let byte = ready!(self.stream.poll_next_unpin(cx)).unwrap()?;
+        buf[0] = byte;
+        Poll::Ready(Ok(1))
     }
 }
 
@@ -78,7 +71,7 @@ where
 }
 
 pub struct Writer<T> {
-    sink: T,
+    pub sink: T,
 }
 
 impl<T> Writer<T> {
@@ -98,14 +91,10 @@ where
         cx: &mut Context,
         buf: &[u8],
     ) -> Poll<Result<usize, Self::Error>> {
-        let mut idx = 0;
-        while idx < buf.len() {
-            ready!(self.sink.poll_ready_unpin(cx))?;
-            self.sink.start_send_unpin(buf[0])?;
-            idx += 1;
-        }
+        ready!(self.sink.poll_ready_unpin(cx))?;
+        self.sink.start_send_unpin(buf[0])?;
 
-        Poll::Ready(Ok(idx))
+        Poll::Ready(Ok(1))
     }
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {

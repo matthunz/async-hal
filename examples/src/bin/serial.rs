@@ -4,8 +4,8 @@
 
 use async_hal::{
     executor::{Executor, NonPending},
-    io::{AsyncRead, AsyncWrite},
-    serial::{Reader, SerialRead, SerialWrite, Writer},
+    io::AsyncRead,
+    serial::{Reader, SerialRead},
 };
 use async_hal_examples as _;
 use core::future::Future;
@@ -23,6 +23,7 @@ static mut EXECUTOR: Executor<NonPending, App> = Executor::non_pending();
 
 #[interrupt]
 fn USART3() {
+    println!("USART3");
     _ = unsafe { EXECUTOR.poll() };
 }
 
@@ -50,22 +51,19 @@ fn main() -> ! {
         Config::default().baudrate(9600.bps()),
         &clocks,
     );
-    let (tx, mut rx) = serial.split();
+    let (_tx, mut rx) = serial.split();
     rx.listen();
 
-    // Create async serial reader and writer
-    let mut writer = Writer::new(tx).into_writer();
+    // Create async serial reader
     let mut reader = Reader::new(rx).into_reader();
 
-    // Create an async task to loopback serial data
+    // Create an async task to read serial data
     let task = async move {
         loop {
-            let mut buf = [0; 32];
+            let mut buf = [0; 1];
             reader.read(&mut buf).await.unwrap();
 
             println!("Received: {}", &buf);
-
-            writer.write_all(&buf).await.unwrap();
         }
     };
 
