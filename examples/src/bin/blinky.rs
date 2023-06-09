@@ -10,7 +10,6 @@ use crate::hal::{
 use async_hal::{
     delay::{DelayMs, Timer},
     executor::{Executor, Interrupt},
-    scheduler::Ready,
 };
 use async_hal_examples as _;
 use core::future::Future;
@@ -54,7 +53,7 @@ fn main() -> ! {
     // Create a counter using TIM2
     let mut counter = dp.TIM2.counter_ms(&clocks);
     counter.listen(Event::Update);
-    let mut timer = Timer::new(counter, &Ready);
+    let mut timer = Timer::new(counter);
 
     // Create an async task to blink the LED
     let task = async move {
