@@ -6,7 +6,7 @@ Async hardware abstraction layer for embedded devices
 [![CI](https://github.com/matthunz/async-hal/actions/workflows/rust.yml/badge.svg)](https://github.com/matthunz/async-hal/actions/workflows/rust.yml)
 
 ## [Examples](https://github.com/matthunz/async-hal/tree/main/examples/)
-### [Blinky](https://github.com/matthunz/async-hal/tree/main/examples/bin/blinky)
+### [Blinky](https://github.com/matthunz/async-hal/blob/main/examples/src/bin/blinky.rs)
 ```rust
 use async_hal::delay::DelayMs;
 
@@ -19,7 +19,7 @@ loop {
 }
 ```
 
-### Serial port loopback
+### [Serial](https://github.com/matthunz/async-hal/blob/main/examples/src/bin/serial.rs)
 ```rust
 use async_hal::io;
 
