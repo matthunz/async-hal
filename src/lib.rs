@@ -4,6 +4,14 @@
 //! Async hardware abstraction layer for embedded devices.
 //! This crate provides zero-cost utilities for async IO with `#![no-std]`.
 //!
+//! Two execution models are provided:
+//! - Interrupt mode: Multiple interrupts can each run a future using an [`Executor`].
+//!   Each future is polled on every interrupt and channels can be used to communicate between them.
+//!
+//! - Thread mode: Interrupts wake a main function where a future is being polled with [`block_on`].
+//!
+//! ## Installation
+//!
 //! The easiest way to get started is to enable all features.
 //!
 //! ```toml
@@ -51,7 +59,6 @@ pub mod can;
 #[cfg(feature = "executor")]
 /// Task executor
 pub mod executor;
-#[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
 #[cfg(feature = "executor")]
 pub use executor::Executor;
 

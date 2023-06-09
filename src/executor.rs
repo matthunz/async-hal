@@ -11,6 +11,16 @@ pub trait Interrupt {
 }
 
 /// Task executor for a single `'static` future.
+///
+/// This provides a polling interface for a [`Future`] running on an interrupt handler.
+/// If the provided [`Waker`] is woken, the executor will pend the provided interrupt with [`Interrupt::pend`].
+///
+/// Executors must be static for use with the waker and [`Pin`] support.
+/// ```
+/// use async_hal::Executor;
+///
+/// static mut EXECUTOR: Executor<(), ()> = Executor::new(());
+/// ```
 #[cfg_attr(docsrs, doc(cfg(feature = "executor")))]
 pub struct Executor<I, F> {
     interrupt: I,

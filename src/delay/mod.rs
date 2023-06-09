@@ -25,6 +25,7 @@ pub trait DelayMs {
     fn start(&mut self, ms: Self::Delay) -> Result<(), Self::Error>;
 
     /// Poll a delay of `ms` milliseconds.
+    /// This function may wake the calling function rather than the waker.
     fn poll_delay_ms(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
 
     /// Attempt to cancel a delay in progress.
