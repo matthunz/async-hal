@@ -13,8 +13,9 @@ use async_hal::{
 };
 use async_hal_examples as _;
 use core::future::Future;
-use cortex_m::{asm::wfe, peripheral::NVIC};
+use cortex_m::peripheral::NVIC;
 use cortex_m_rt::entry;
+use defmt::println;
 use stm32f1xx_hal::{self as hal, pac};
 
 struct Tim2;
@@ -35,6 +36,8 @@ fn TIM2() {
 
 #[entry]
 fn main() -> ! {
+    println!("Started!");
+
     let dp = Peripherals::take().unwrap();
 
     // Configure PC13 pin to blink LED
@@ -58,12 +61,19 @@ fn main() -> ! {
     // Create an async task to blink the LED
     let task = async move {
         loop {
+            println!("Blink!");
+
             led.toggle();
+
             timer.delay_ms(1_000).await.unwrap();
         }
     };
+
     // Spawn the task on the executor
-    _ = unsafe { EXECUTOR.spawn(task) };
+    _ = unsafe {
+        _ = EXECUTOR.spawn(task);
+        EXECUTOR.poll()
+    };
 
     // Enable TIM2 interrupt
     unsafe {
@@ -72,6 +82,7 @@ fn main() -> ! {
 
     // Run in low-power mode
     loop {
-        wfe()
+        // TODO this is disabled for defmt
+        // wfe()
     }
 }
