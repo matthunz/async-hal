@@ -1,4 +1,3 @@
-use crate::Scheduler;
 use core::{
     pin::Pin,
     task::{Context, Poll},
@@ -7,41 +6,35 @@ use embedded_hal::serial::Write;
 use futures::Sink;
 
 /// Write half of a UART serial port.
-pub struct Writer<T, W, S> {
+pub struct Writer<T, W> {
     // Generic non-blocking serial writer
     write: T,
 
     // Cache of the next word to send
     word: Option<W>,
-
-    // Scheduler to wake the write task
-    scheduler: S,
 }
 
-impl<T, W, S> Writer<T, W, S> {
+impl<T, W> Writer<T, W> {
     /// Create a new writer from an instance of [`Write`] and [`Scheduler`].
-    pub const fn new(transmit: T, scheduler: S) -> Self {
+    pub const fn new(transmit: T) -> Self {
         Self {
             write: transmit,
-            scheduler,
             word: None,
         }
     }
 }
 
-impl<T, W, S> Sink<W> for Writer<T, W, S>
+impl<T, W> Sink<W> for Writer<T, W>
 where
     T: Write<W> + Unpin,
     W: Clone + Unpin,
-    S: Scheduler + Unpin,
 {
     type Error = T::Error;
 
-    fn poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         if self.word.is_none() {
             Poll::Ready(Ok(()))
         } else {
-            self.scheduler.schedule(cx.waker());
             Poll::Pending
         }
     }
@@ -55,12 +48,8 @@ where
         }
     }
 
-    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        let Self {
-            write,
-            word,
-            scheduler: spawn,
-        } = &mut *self;
+    fn poll_flush(mut self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        let Self { write, word } = &mut *self;
 
         if let Some(word) = word.clone() {
             // TODO flush!
@@ -69,10 +58,7 @@ where
                     self.word = None;
                     Poll::Ready(Ok(()))
                 }
-                Err(nb::Error::WouldBlock) => {
-                    spawn.schedule(cx.waker());
-                    Poll::Pending
-                }
+                Err(nb::Error::WouldBlock) => Poll::Pending,
                 Err(nb::Error::Other(error)) => Poll::Ready(Err(error)),
             }
         } else {

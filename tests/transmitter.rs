@@ -5,12 +5,11 @@ mod tests {
         can::{MockFrame, MockTransmit, Transmitter},
     };
     use embedded_hal::can::{Id, StandardId};
-    use futures::{task::AtomicWaker, SinkExt};
+    use futures::SinkExt;
 
     #[test]
     fn it_works() {
-        let waker = AtomicWaker::new();
-        let mut tx = Transmitter::new(MockTransmit::default(), &waker);
+        let mut tx = Transmitter::new(MockTransmit::default());
 
         let frame = MockFrame {
             id: Id::Standard(StandardId::ZERO),

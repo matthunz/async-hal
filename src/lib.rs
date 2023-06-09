@@ -50,18 +50,11 @@ pub use interrupt::Interrupt;
 /// Asynchronous IO
 pub mod io;
 
-/// Task scheduler
-pub mod scheduler;
-pub use scheduler::Scheduler;
-
 /// Serial port
 pub mod serial;
 
 /// Delay timers
 pub mod delay;
-
-/// Async USB
-pub mod usb;
 
 /// Run `future` to completion and return its output.
 /// This will repeatedly poll the future and call `wait()`.

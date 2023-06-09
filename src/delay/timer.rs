@@ -1,5 +1,4 @@
 use super::DelayMs;
-use crate::Scheduler;
 use core::{
     pin::Pin,
     task::{Context, Poll},
@@ -7,22 +6,20 @@ use core::{
 use embedded_hal::timer::{Cancel, CountDown};
 use fugit::MillisDurationU32;
 
-pub struct Timer<T, S> {
+pub struct Timer<T> {
     timer: T,
-    scheduler: S,
 }
 
-impl<T, S> Timer<T, S> {
-    pub const fn new(timer: T, scheduler: S) -> Self {
-        Self { timer, scheduler }
+impl<T> Timer<T> {
+    pub const fn new(timer: T) -> Self {
+        Self { timer }
     }
 }
 
-impl<T, S> DelayMs for Timer<T, S>
+impl<T> DelayMs for Timer<T>
 where
     T: CountDown + Cancel + Unpin,
     T::Time: From<MillisDurationU32>,
-    S: Scheduler + Unpin,
 {
     type Delay = u32;
     type Error = T::Error;
@@ -36,14 +33,11 @@ where
         self.timer.cancel()
     }
 
-    fn poll_delay_ms(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn poll_delay_ms(mut self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         match self.timer.wait() {
             Ok(()) => Poll::Ready(Ok(())),
             Err(nb::Error::Other(_void)) => unreachable!(),
-            Err(nb::Error::WouldBlock) => {
-                self.scheduler.schedule(cx.waker());
-                Poll::Pending
-            }
+            Err(nb::Error::WouldBlock) => Poll::Pending,
         }
     }
 }
