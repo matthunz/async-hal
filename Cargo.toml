@@ -11,12 +11,13 @@ mock = []
 can = []
 delay = []
 executor = []
-io = []
+io = ["bbqueue"]
 serial = []
 nb = ["fugit", "dep:nb"]
 full = ["can", "delay", "executor", "io", "nb", "serial"]
 
 [dependencies]
+bbqueue = { version = "0.5.1", optional = true }
 bxcan = { version = "0.7.0", optional = true }
 embedded-hal = "0.2.7"
 fugit = { version =  "0.3.6", optional = true }

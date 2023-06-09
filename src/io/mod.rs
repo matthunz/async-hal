@@ -19,6 +19,8 @@ pub use buf_reader::BufReader;
 mod copy_buf;
 pub use copy_buf::copy_buf;
 
+pub mod queue;
+
 mod read;
 pub use read::Read;
 
